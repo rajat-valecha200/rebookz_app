@@ -1,0 +1,23 @@
+[
+  {
+    "id": "book_001",
+    "title": "Physics Class 12",
+    "categoryId": "cat_school",
+    "subCategoryId": "sub_class_12",
+    "publication": "NCERT",
+    "condition": "Good",
+    "priceType": "SELL",
+    "price": 250,
+    "description": "Used for one year, clean condition",
+    "images": ["placeholder-book.png"],
+    "location": {
+      "city": "Dubai",
+      "lat": 25.205,
+      "lng": 55.271
+    },
+    "distance": 0.4,
+    "ownerId": "user_002",
+    "status": "AVAILABLE",
+    "createdAt": "2026-01-26"
+  }
+]

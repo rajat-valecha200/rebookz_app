@@ -1,0 +1,6 @@
+[
+  { "id": "sub_class_12", "categoryId": "cat_school", "name": "Class 12" },
+  { "id": "sub_neet", "categoryId": "cat_school", "name": "NEET" },
+  { "id": "sub_novel", "categoryId": "cat_fiction", "name": "Novels" },
+  { "id": "sub_manga", "categoryId": "cat_fiction", "name": "Manga" }
+]

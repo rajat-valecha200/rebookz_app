@@ -1,0 +1,10 @@
+{
+  "id": "user_001",
+  "name": "Rajat",
+  "phone": "9999999999",
+  "location": {
+    "city": "Dubai",
+    "lat": 25.2048,
+    "lng": 55.2708
+  }
+}

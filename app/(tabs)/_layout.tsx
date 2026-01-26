@@ -1,33 +1,65 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/colors";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: "#999",
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
+      }}
+    >
+      {/* HOME */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
         }}
       />
+
+      {/* CATEGORIES */}
       <Tabs.Screen
-        name="explore"
+        name="categories"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Categories",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* MY BOOKS */}
+      <Tabs.Screen
+        name="my-books"
+        options={{
+          title: "My Books",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* ACCOUNT */}
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

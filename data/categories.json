@@ -1,0 +1,6 @@
+[
+  { "id": "cat_school", "name": "School Books", "hasSubCategory": true },
+  { "id": "cat_college", "name": "College Books", "hasSubCategory": true },
+  { "id": "cat_fiction", "name": "Fiction", "hasSubCategory": true },
+  { "id": "cat_nonfiction", "name": "Non-Fiction", "hasSubCategory": true }
+]
