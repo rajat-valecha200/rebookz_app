@@ -1,36 +1,53 @@
-import { TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../constants/colors";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React from 'react';
+import { TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { Colors } from '../constants/colors';
+import { useAuth } from '../context/AuthContext';
 
-export default function FloatingButton({ onPress }: { onPress: () => void }) {
-  const insets = useSafeAreaInsets();
+interface FloatingButtonProps {
+  bottomInset?: number;
+}
+
+export default function FloatingButton({ bottomInset = 20 }: FloatingButtonProps) {
+  const { isAuthenticated } = useAuth();
+
+  const handlePress = () => {
+    if (isAuthenticated) {
+      router.push('/add-book');
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const bottomPosition = Platform.OS === 'ios' ? 20 + bottomInset : 20 + bottomInset;
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.btn,
-        {
-          bottom: insets.bottom + 16, // 🔥 SAFE
-        },
-      ]}
-      onPress={onPress}
+    <TouchableOpacity 
+      style={[styles.container, { bottom: bottomPosition }]} 
+      onPress={handlePress}
+      activeOpacity={0.8}
     >
-      <Ionicons name="add" size={28} color="#fff" />
+      <Ionicons name="add" size={28} color={Colors.background} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  btn: {
-    position: "absolute",
+  container: {
+    position: 'absolute',
     right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: Colors.primary,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+    zIndex: 1000,
   },
 });

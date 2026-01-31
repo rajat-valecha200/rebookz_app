@@ -1,10 +1,15 @@
 {
-  "id": "user_001",
-  "name": "Rajat",
-  "phone": "9999999999",
+  "id": "101",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1234567890",
+  "profileImage": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
   "location": {
-    "city": "Dubai",
-    "lat": 25.2048,
-    "lng": 55.2708
-  }
+    "address": "123 Main St, New York",
+    "lat": 40.7128,
+    "lng": -74.0060
+  },
+  "joinedDate": "2024-01-01",
+  "totalBooks": 3,
+  "rating": 4.5
 }

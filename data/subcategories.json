@@ -1,6 +1,71 @@
-[
-  { "id": "sub_class_12", "categoryId": "cat_school", "name": "Class 12" },
-  { "id": "sub_neet", "categoryId": "cat_school", "name": "NEET" },
-  { "id": "sub_novel", "categoryId": "cat_fiction", "name": "Novels" },
-  { "id": "sub_manga", "categoryId": "cat_fiction", "name": "Manga" }
-]
+{
+  "school_books": [
+    "Class 1-5",
+    "Class 6-8",
+    "Class 9-10",
+    "Class 11-12",
+    "CBSE Books",
+    "ICSE Books",
+    "State Board",
+    "NCERT Books",
+    "Reference Books",
+    "Sample Papers"
+  ],
+  "college_books": [
+    "Engineering",
+    "Medical",
+    "Commerce",
+    "Arts",
+    "Science",
+    "Law",
+    "BBA/MBA",
+    "BCA/MCA",
+    "First Year",
+    "Reference Books"
+  ],
+  "fiction": [
+    "Novels",
+    "Short Stories",
+    "Poetry",
+    "Drama",
+    "Classics",
+    "Contemporary",
+    "Romance",
+    "Thriller",
+    "Mystery",
+    "Fantasy"
+  ],
+  "science": [
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "Mathematics",
+    "Computer Science",
+    "Astronomy",
+    "Geology",
+    "Environmental",
+    "Research Papers"
+  ],
+  "engineering": [
+    "Computer Science",
+    "Mechanical",
+    "Electrical",
+    "Civil",
+    "Electronics",
+    "Chemical",
+    "Aerospace",
+    "First Year",
+    "Reference Books"
+  ],
+  "medical": [
+    "MBBS",
+    "NEET",
+    "Nursing",
+    "Pharmacy",
+    "Dental",
+    "Ayurveda",
+    "Homeopathy",
+    "Medical Reference",
+    "Research Papers"
+  ]
+}

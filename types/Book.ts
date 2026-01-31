@@ -1,27 +1,28 @@
-export type PriceType = "SELL" | "RENT" | "SWAP" | "FREE";
-
 export interface Book {
   id: string;
   title: string;
-  categoryId: string;
-  subCategoryId?: string;
-  publication?: string;
-  condition?: string;
-
-  priceType: PriceType;
-  price?: number;
-
-  description?: string;
+  author: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+  type: 'sell' | 'rent' | 'swap' | 'donate';
+  price: number;
   images: string[];
-
+  sellerId: string;
+  sellerName: string;
+  sellerPhone: string;
   location: {
-    city: string;
+    address: string;
     lat: number;
     lng: number;
   };
-
-  distance: number; // in KM
-  ownerId: string;
-  status: "AVAILABLE" | "SOLD";
+  isAvailable: boolean;
+  status: 'available' | 'reserved' | 'sold';
+  distance: number;
   createdAt: string;
 }
+
+export type BookCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+export type BookType = 'sell' | 'rent' | 'swap' | 'donate';
+export type BookStatus = 'available' | 'reserved' | 'sold';

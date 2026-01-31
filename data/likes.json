@@ -1,3 +1,10 @@
 [
-  { "userId": "user_001", "bookId": "book_001" }
+  {
+    "userId": "101",
+    "bookId": "2"
+  },
+  {
+    "userId": "101",
+    "bookId": "4"
+  }
 ]

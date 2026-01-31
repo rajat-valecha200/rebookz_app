@@ -1,23 +1,50 @@
 [
   {
-    "id": "book_001",
-    "title": "Physics Class 12",
-    "categoryId": "cat_school",
-    "subCategoryId": "sub_class_12",
-    "publication": "NCERT",
-    "condition": "Good",
-    "priceType": "SELL",
+    "id": "1",
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "description": "An Easy & Proven Way to Build Good Habits & Break Bad Ones",
+    "category": "self_help",
+    "subcategory": "personal_development",
+    "condition": "good",
+    "type": "sell",
     "price": 250,
-    "description": "Used for one year, clean condition",
-    "images": ["placeholder-book.png"],
+    "images": ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=500&fit=crop"],
+    "sellerId": "101",
+    "sellerName": "John Doe",
+    "sellerPhone": "+1234567890",
     "location": {
-      "city": "Dubai",
-      "lat": 25.205,
-      "lng": 55.271
+      "address": "123 Main St, New York",
+      "lat": 40.7128,
+      "lng": -74.0060
     },
-    "distance": 0.4,
-    "ownerId": "user_002",
-    "status": "AVAILABLE",
-    "createdAt": "2026-01-26"
+    "isAvailable": true,
+    "status": "available",
+    "distance": 0.5,
+    "createdAt": "2024-01-15"
+  },
+  {
+    "id": "2",
+    "title": "Class 10 Mathematics NCERT",
+    "author": "NCERT",
+    "description": "Complete textbook for CBSE class 10 with solved examples",
+    "category": "academic",
+    "subcategory": "school_books",
+    "condition": "fair",
+    "type": "swap",
+    "price": 0,
+    "images": ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=500&fit=crop"],
+    "sellerId": "102",
+    "sellerName": "Raj Patel",
+    "sellerPhone": "+1234567892",
+    "location": {
+      "address": "456 Park Ave, New York",
+      "lat": 40.7505,
+      "lng": -73.9934
+    },
+    "isAvailable": true,
+    "status": "available",
+    "distance": 1.2,
+    "createdAt": "2024-01-20"
   }
 ]
