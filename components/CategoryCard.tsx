@@ -12,17 +12,6 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ category, onPress }: CategoryCardProps) {
-  const iconMap: { [key: string]: string } = {
-    school: 'school',
-    book: 'book',
-    person: 'person',
-    briefcase: 'briefcase',
-    people: 'people',
-    flask: 'flask',
-    medkit: 'medkit',
-    build: 'build',
-  };
-
   const handlePress = () => {
     if (onPress) {
       onPress();
@@ -36,11 +25,11 @@ export default function CategoryCard({ category, onPress }: CategoryCardProps) {
 
   return (
     <TouchableOpacity style={styles.container} onPress={handlePress}>
-      <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
-        <Ionicons 
-          name={iconMap[category.icon] as any} 
-          size={24} 
-          color={category.color} 
+      <View style={[styles.iconContainer, { backgroundColor: (category.color || Colors.primary) + '20' }]}>
+        <Ionicons
+          name={(category.icon || 'book-outline') as any}
+          size={24}
+          color={category.color || Colors.primary}
         />
       </View>
       <Text style={styles.name} numberOfLines={1}>{category.name}</Text>

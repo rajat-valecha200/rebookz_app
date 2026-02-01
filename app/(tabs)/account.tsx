@@ -16,140 +16,154 @@ import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
 import { bookService } from '../../services/bookService';
-
 export default function AccountScreen() {
   const { user, logout } = useAuth();
-
   const handleLogout = () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
           style: 'destructive',
-          onPress: () => {
-            logout();
-            router.replace('/(tabs)/home');
+          onPress: async () => {
+            await logout();
+            router.replace('/(tabs)/home'); // Ensure we go home after logout
           }
         },
       ]
     );
   };
-
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
       'This action cannot be undone. All your data will be permanently deleted.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: () => {
             Alert.alert('Account Deleted', 'Your account has been deleted (demo)');
+            logout();
           }
         },
       ]
     );
   };
-
-  const profileItems = [
-    { icon: 'heart', label: 'My Favorites', onPress: () => router.push('/favourites') },
-    { icon: 'book', label: 'My Books', onPress: () => router.push('/(tabs)/my-books') },
-    { icon: 'chatbubble', label: 'Messages', onPress: () => {}, badge: '3' },
+  const [stats, setStats] = React.useState([
+    { label: 'Books Listed', value: 0 },
+    { label: 'Books Sold', value: 0 },
+    { label: 'Favorites', value: 0 },
+  ]);
+  const quickAccessItems = [
+    { label: 'Favorites', value: stats[2]?.value || 0, icon: 'heart', color: '#FF6B6B', route: '/favourites' },
+    { label: 'My Books', value: stats[0]?.value || 0, icon: 'book', color: '#4ECDC4', route: '/(tabs)/my-books' },
+    { label: 'Sold', value: stats[1]?.value || 0, icon: 'checkmark-circle', color: '#2ECC71', route: '/(tabs)/my-books' },
   ];
-
   const settingsItems = [
-    { icon: 'notifications', label: 'Notifications', onPress: () => {} },
-    { icon: 'location', label: 'Location Settings', onPress: () => {} },
-    { icon: 'shield', label: 'Privacy & Security', onPress: () => {} },
-    { icon: 'help-circle', label: 'Help & Support', onPress: () => {} },
+    {
+      icon: 'document-text',
+      label: 'Terms & Conditions',
+      onPress: () => router.push('/content/terms')
+    },
+    { icon: 'help-circle', label: 'Help & Support', onPress: () => router.push('/content/help') },
   ];
-
   const aboutItems = [
-    { icon: 'document-text', label: 'Terms & Conditions', onPress: () => {} },
-    { icon: 'information-circle', label: 'About ReBookz', onPress: () => {} },
-    { icon: 'star', label: 'Rate App', onPress: () => {} },
-    { icon: 'share-social', label: 'Share App', onPress: () => {} },
+    { icon: 'information-circle', label: 'About ReBookz', onPress: () => router.push('/content/about') },
+    // { icon: 'star', label: 'Rate App', onPress: () => { } },
+    // { icon: 'share-social', label: 'Share App', onPress: () => { } },
   ];
 
-  const stats = [
-    { label: 'Books Listed', value: bookService.getUserBooks(user?.id || '').length },
-    { label: 'Books Sold', value: bookService.getUserBooks(user?.id || '').filter(b => !b.isAvailable).length },
-    { label: 'Favorites', value: bookService.getUserFavorites(user?.id || '').length },
-    { label: 'Rating', value: `${user?.rating || 4.5}/5` },
-  ];
-
+  React.useEffect(() => {
+    if (user) {
+      loadStats();
+    }
+  }, [user]);
+  const loadStats = async () => {
+    if (!user) return;
+    try {
+      const userBooks = await bookService.getUserBooks(user.id);
+      const favorites = await bookService.getUserFavorites(user.id);
+      setStats([
+        { label: 'Books Listed', value: userBooks.length },
+        { label: 'Books Sold', value: userBooks.filter(b => !b.isAvailable).length },
+        { label: 'Favorites', value: favorites.length },
+      ]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <ScrollView contentContainerStyle={styles.guestContainer}>
+          <View style={styles.guestContent}>
+            <Ionicons name="person-circle-outline" size={80} color={Colors.textSecondary} />
+            <Text style={styles.guestTitle}>Welcome Guest</Text>
+            <Text style={styles.guestSubtitle}>Login to manage your books, favorites and profile.</Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => router.push('/login')}
+            >
+              <Text style={styles.loginButtonText}>Login / Register</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Static Settings for Guest */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Support</Text>
+            {settingsItems.map((item, index) => (
+              <TouchableOpacity key={index} style={styles.menuItem} onPress={item.onPress}>
+                <View style={styles.menuLeft}>
+                  <View style={styles.menuIconContainer}>
+                    <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <Image
-            source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e' }}
-            style={styles.profileImage}
-          />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name || 'Guest User'}</Text>
-            <Text style={styles.profilePhone}>{user?.phone || 'Login to see details'}</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={14} color={Colors.warning} />
-              <Text style={styles.ratingText}>{user?.rating || '4.5'}</Text>
-              <Text style={styles.ratingCount}>(12 reviews)</Text>
-            </View>
+            <Text style={styles.profileName}>Hi, {user?.name || 'User'}</Text>
+            <Text style={styles.profilePhone}>Mobile: {user?.phone}</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => Alert.alert('Edit Profile', 'Edit profile functionality')}
-          >
-            <Ionicons name="create-outline" size={20} color={Colors.primary} />
-          </TouchableOpacity>
         </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          {stats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Profile</Text>
-          {profileItems.map((item, index) => (
+        {/* Quick Access Grid */}
+        <View style={styles.quickAccessContainer}>
+          {quickAccessItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
-              onPress={item.onPress}
+              style={[styles.quickAccessCard, { backgroundColor: item.color + '15', borderWidth: 1, borderColor: item.color + '30' }]}
+              onPress={() => router.push(item.route as any)}
             >
-              <View style={styles.menuLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
-                </View>
-                <Text style={styles.menuLabel}>{item.label}</Text>
+              <View style={[styles.quickAccessIcon, { backgroundColor: Colors.surface, shadowOpacity: 0.1 }]}>
+                <Ionicons name={item.icon as any} size={24} color={item.color} />
               </View>
-              <View style={styles.menuRight}>
-                {item.badge && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.badge}</Text>
-                  </View>
-                )}
-                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={styles.quickAccessValue}>{item.value}</Text>
+                <Text style={styles.quickAccessLabel}>{item.label}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Settings Section */}
+        {/* Other Stats */}
+        {/* Other Stats Removed - Integrated into Cards */}
+        {/* General Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>General</Text>
           {settingsItems.map((item, index) => (
             <TouchableOpacity
               key={index}
@@ -165,14 +179,9 @@ export default function AccountScreen() {
               <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           ))}
-        </View>
-
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
           {aboutItems.map((item, index) => (
             <TouchableOpacity
-              key={index}
+              key={`about-${index}`}
               style={styles.menuItem}
               onPress={item.onPress}
             >
@@ -185,56 +194,47 @@ export default function AccountScreen() {
               <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           ))}
-        </View>
-
-        {/* Account Actions */}
-        <View style={styles.actionsSection}>
+          {/* Logout as a list item */}
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={[styles.menuItem, { borderBottomWidth: 0 }]}
             onPress={handleLogout}
           >
-            <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDeleteAccount}
-          >
-            <Ionicons name="trash-outline" size={20} color={Colors.textSecondary} />
-            <Text style={styles.deleteButtonText}>Delete Account</Text>
+            <View style={styles.menuLeft}>
+              <View style={[styles.menuIconContainer, { backgroundColor: Colors.danger + '10' }]}>
+                <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
+              </View>
+              <Text style={[styles.menuLabel, { color: Colors.danger }]}>Logout</Text>
+            </View>
           </TouchableOpacity>
         </View>
-
+        {/* Delete Account */}
+        <TouchableOpacity
+          style={styles.deleteButtonStyled}
+          onPress={handleDeleteAccount}
+        >
+          <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+          <Text style={styles.deleteButtonStyledText}>Delete Account</Text>
+        </TouchableOpacity>
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appName}>ReBookz</Text>
+          {/* <Text style={styles.appName}>ReBookz</Text>
+          <Text style={styles.appTagline}>Give your books a second life</Text> */}
           <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.appCopyright}>© 2024 ReBookz. All rights reserved.</Text>
+          <Text style={styles.appCopyright}>© {new Date().getFullYear()} ReBookz. All rights reserved.</Text>
         </View>
-
-        <View style={styles.spacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    backgroundColor: Colors.surface,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: Spacing.md,
+    padding: Spacing.md,
+    paddingBottom: Spacing.sm,
+    backgroundColor: Colors.background,
   },
   profileInfo: {
     flex: 1,
@@ -248,7 +248,6 @@ const styles = StyleSheet.create({
   profilePhone: {
     fontSize: 16,
     color: Colors.textSecondary,
-    marginBottom: 8,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -275,49 +274,95 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  statsGrid: {
+  quickAccessContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: Spacing.md,
-    backgroundColor: Colors.background,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    marginVertical: Spacing.md,
   },
-  statCard: {
-    width: '50%',
-    padding: Spacing.md,
+  quickAccessCard: {
+    width: '31%',
+    borderRadius: 20,
+    padding: Spacing.sm,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  statValue: {
-    fontSize: 28,
+  quickAccessIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  quickAccessValue: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.primary,
-    marginBottom: 4,
+    color: Colors.textPrimary,
   },
-  statLabel: {
+  quickAccessLabel: {
     fontSize: 14,
     color: Colors.textSecondary,
-    textAlign: 'center',
+    marginTop: 2,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    marginHorizontal: Spacing.md,
+    borderRadius: 12,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  miniStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  miniStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: Colors.border,
+  },
+  miniStatValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  miniStatLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   section: {
-    marginTop: Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    marginBottom: Spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
     padding: Spacing.md,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   menuLeft: {
     flexDirection: 'row',
@@ -326,8 +371,8 @@ const styles = StyleSheet.create({
   menuIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primary + '20',
+    borderRadius: 10,
+    backgroundColor: Colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.md,
@@ -335,72 +380,46 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     color: Colors.textPrimary,
+    fontWeight: '500',
   },
-  menuRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  badge: {
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginRight: 8,
-  },
-  badgeText: {
-    color: Colors.background,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionsSection: {
-    marginTop: Spacing.xl,
+  deleteButtonStyled: {
     marginHorizontal: Spacing.md,
-  },
-  logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.md,
     borderRadius: 12,
-    backgroundColor: Colors.danger + '10',
-    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.danger,
+    backgroundColor: Colors.surface,
+    marginBottom: Spacing.md,
   },
-  logoutButtonText: {
+  deleteButtonStyledText: {
     color: Colors.danger,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: Spacing.sm,
   },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.md,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  deleteButtonText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: Spacing.sm,
-  },
   appInfo: {
     alignItems: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
     marginBottom: Spacing.xxl,
     paddingHorizontal: Spacing.md,
   },
   appName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: Colors.primary,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
+  },
+  appTagline: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: Spacing.sm,
   },
   appVersion: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
   },
@@ -409,7 +428,67 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
   },
-  spacer: {
-    height: 20,
+  guestContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: Spacing.xl,
+  },
+  guestContent: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  guestTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  guestSubtitle: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+    lineHeight: 22,
+  },
+  loginButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: 25,
+    width: '100%',
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: Colors.background,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  nameInput: {
+    fontSize: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.primary,
+    paddingVertical: 4,
+    color: Colors.textPrimary,
+    minWidth: 150,
+    marginBottom: 4,
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 2,
   },
 });

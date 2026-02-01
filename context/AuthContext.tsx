@@ -1,50 +1,90 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User } from '../types/User';
-import { userService } from '../services/userService';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import api from '../services/api';
+
+interface User {
+  id: string; // Adjusted to match backend response mapping if needed, or keep standard
+  _id?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  profileImage?: string;
+  rating?: number;
+}
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (phone: string) => Promise<boolean>;
-  logout: () => void;
-  updateUser: (updates: Partial<User>) => void;
+  isLoading: boolean;
+  sendOtp: (phone: string) => Promise<void>;
+  verifyOtp: (phone: string, otp: string) => Promise<void>;
+  logout: () => Promise<void>;
+  skipLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(userService.getCurrentUser());
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Mock: always authenticated
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Start loading to check token
+  const router = useRouter();
 
-  const login = async (phone: string): Promise<boolean> => {
+  const isAuthenticated = !!user;
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
+  const checkLoginStatus = async () => {
     try {
-      const success = userService.login(phone);
-      if (success) {
-        setUser(userService.getCurrentUser());
-        setIsAuthenticated(true);
+      const userInfo = await SecureStore.getItemAsync('userInfo');
+      if (userInfo) {
+        setUser(JSON.parse(userInfo));
       }
-      return success;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendOtp = async (phone: string) => {
+    try {
+      await api.post('/users/send-otp', { phone });
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
+      console.error(error);
+      throw error;
     }
   };
 
-  const logout = () => {
-    userService.logout();
+  const verifyOtp = async (phone: string, otp: string) => {
+    try {
+      const { data } = await api.post('/users/verify-otp', { phone, otp });
+      // Map _id to id if needed for frontend consistency
+      const userData = data as any;
+      const user = { ...userData, id: userData._id };
+      setUser(user);
+      await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
     setUser(null);
-    setIsAuthenticated(false);
+    await SecureStore.deleteItemAsync('userInfo');
+    router.replace('/login');
   };
 
-  const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      const updatedUser = userService.updateProfile(updates);
-      setUser(updatedUser);
-    }
+  const skipLogin = () => {
+    router.replace('/(tabs)/home');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, logout, skipLogin }}>
       {children}
     </AuthContext.Provider>
   );

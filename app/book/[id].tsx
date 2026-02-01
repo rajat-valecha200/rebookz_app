@@ -27,20 +27,23 @@ export default function BookDetailsScreen() {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (id) {
-      const bookData = bookService.getBookById(id as string);
-      if (bookData) {
-        setBook(bookData);
-        if (user) {
-          const favorited = bookService.isBookFavorited(user.id, bookData.id);
-          setIsFavorite(favorited);
+    const loadBookData = async () => {
+      if (id) {
+        const bookData = await bookService.getBookById(id as string);
+        if (bookData) {
+          setBook(bookData);
+          if (user) {
+            const favorited = await bookService.isBookFavorited(user.id, bookData.id);
+            setIsFavorite(favorited);
+          }
         }
       }
     }
+    loadBookData();
   }, [id, user]);
 
   const handleCallSeller = () => {
-    Linking.openURL(`tel:${book?.sellerPhone}`).catch(err => 
+    Linking.openURL(`tel:${book?.sellerPhone}`).catch(err =>
       Alert.alert('Error', 'Could not make call')
     );
   };
@@ -56,7 +59,7 @@ export default function BookDetailsScreen() {
 
     const message = `Hi, I'm interested in your book "${book?.title}" on ReBookz.`;
     const url = `whatsapp://send?phone=${book?.sellerPhone}&text=${encodeURIComponent(message)}`;
-    
+
     Linking.openURL(url).catch(() => {
       Alert.alert(
         'WhatsApp Not Installed',
@@ -76,9 +79,9 @@ export default function BookDetailsScreen() {
     }
   };
 
-  const handleToggleFavorite = () => {
-    if (isAuthenticated) {
-      bookService.toggleFavorite(user.id, book!.id);
+  const handleToggleFavorite = async () => {
+    if (isAuthenticated && user) {
+      await bookService.toggleFavorite(user.id, book!.id);
       setIsFavorite(!isFavorite);
     } else {
       Alert.alert('Login Required', 'Please login to save favorites', [
@@ -94,11 +97,11 @@ export default function BookDetailsScreen() {
         <View style={styles.notFound}>
           <Ionicons name="book-outline" size={64} color={Colors.textSecondary} />
           <Text style={styles.notFoundText}>Book not found</Text>
-          <TouchableOpacity 
-            style={styles.backButton}
+          <TouchableOpacity
+            style={styles.notFoundButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.backButtonText}>Go Back</Text>
+            <Text style={styles.notFoundButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -109,14 +112,14 @@ export default function BookDetailsScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{book.title}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShare}
         >
@@ -124,24 +127,24 @@ export default function BookDetailsScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         {/* Image Section */}
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: book.images[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=500&fit=crop' }} 
+          <Image
+            source={{ uri: book.images[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=500&fit=crop' }}
             style={styles.image}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.favoriteButton}
             onPress={handleToggleFavorite}
           >
-            <Ionicons 
-              name={isFavorite ? "heart" : "heart-outline"} 
-              size={24} 
-              color={isFavorite ? Colors.danger : Colors.background} 
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={24}
+              color={isFavorite ? Colors.danger : Colors.background}
             />
           </TouchableOpacity>
         </View>
@@ -151,24 +154,26 @@ export default function BookDetailsScreen() {
           {/* Price and Status */}
           <View style={styles.headerRow}>
             <Text style={styles.price}>
-              {book.type === 'sell' || book.type === 'rent' ? `₹${book.price}` : 'FREE'}
+              {book.type === 'sell' || book.type === 'rent' ? `SAR ${book.price}` : 'FREE'}
             </Text>
             <View style={[
               styles.statusBadge,
-              { backgroundColor: 
-                book.type === 'sell' ? Colors.primary + '20' :
-                book.type === 'rent' ? Colors.info + '20' :
-                book.type === 'swap' ? Colors.warning + '20' :
-                Colors.success + '20'
+              {
+                backgroundColor:
+                  book.type === 'sell' ? Colors.primary + '20' :
+                    book.type === 'rent' ? Colors.info + '20' :
+                      book.type === 'swap' ? Colors.warning + '20' :
+                        Colors.success + '20'
               }
             ]}>
               <Text style={[
                 styles.statusText,
-                { color: 
-                  book.type === 'sell' ? Colors.primary :
-                  book.type === 'rent' ? Colors.info :
-                  book.type === 'swap' ? Colors.warning :
-                  Colors.success
+                {
+                  color:
+                    book.type === 'sell' ? Colors.primary :
+                      book.type === 'rent' ? Colors.info :
+                        book.type === 'swap' ? Colors.warning :
+                          Colors.success
                 }
               ]}>
                 {book.type.toUpperCase()}
@@ -251,14 +256,14 @@ export default function BookDetailsScreen() {
 
       {/* Contact Actions - Fixed with safe area */}
       <View style={[styles.contactActions, { paddingBottom: insets.bottom }]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.contactButton, styles.callButton]}
           onPress={handleCallSeller}
         >
           <Ionicons name="call" size={20} color={Colors.background} />
           <Text style={styles.contactButtonText}>Call</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.contactButton, styles.whatsappButton]}
           onPress={handleWhatsApp}
         >
@@ -494,5 +499,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: Spacing.sm,
+  },
+  notFoundButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: 8,
+    marginTop: Spacing.md,
+  },
+  notFoundButtonText: {
+    color: Colors.background,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

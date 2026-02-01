@@ -13,20 +13,21 @@ import Header from '../../components/Header';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { categoryService } from '../../services/categoryService';
+import { Category } from '../../types/Category';
 
 export default function CategoriesScreen() {
-  const [mainCategories, setMainCategories] = useState([]);
-  const [selectedMain, setSelectedMain] = useState(null);
-  const [subCategories, setSubCategories] = useState([]);
-  const [expandedSub, setExpandedSub] = useState(null);
-  const [finalCategories, setFinalCategories] = useState([]);
+  const [mainCategories, setMainCategories] = useState<Category[]>([]);
+  const [selectedMain, setSelectedMain] = useState<Category | null>(null);
+  const [subCategories, setSubCategories] = useState<Category[]>([]);
+  const [expandedSub, setExpandedSub] = useState<Category | null>(null);
+  const [finalCategories, setFinalCategories] = useState<{ id: string, name: string }[]>([]);
 
   useEffect(() => {
     loadCategories();
   }, []);
 
-  const loadCategories = () => {
-    const mainCats = categoryService.getMainCategories();
+  const loadCategories = async () => {
+    const mainCats = await categoryService.getMainCategories();
     setMainCategories(mainCats);
     if (mainCats.length > 0) {
       setSelectedMain(mainCats[0]);
@@ -34,49 +35,58 @@ export default function CategoriesScreen() {
   };
 
   useEffect(() => {
-    if (selectedMain) {
-      if (selectedMain.hasChildren) {
-        const subs = categoryService.getChildCategories(selectedMain.id);
-        setSubCategories(subs);
-        setExpandedSub(null);
-      } else {
-        setSubCategories([]);
-        setExpandedSub(null);
+    const loadSubs = async () => {
+      if (selectedMain) {
+        if (selectedMain.hasChildren) {
+          const subs = await categoryService.getChildCategories(selectedMain.id);
+          setSubCategories(subs);
+          setExpandedSub(null);
+        } else {
+          setSubCategories([]);
+          setExpandedSub(null);
+        }
+        setFinalCategories([]);
       }
-      setFinalCategories([]);
-    }
+    };
+    loadSubs();
   }, [selectedMain]);
 
-  const toggleSubCategory = (category) => {
+  const toggleSubCategory = async (category: Category) => {
+    // If leaf node (no children), navigate to books
+    if (!category.hasChildren) {
+      router.push({
+        pathname: '/category-books',
+        params: { category: category.name }
+      });
+      return;
+    }
+
+    // Toggle expansion
     if (expandedSub?.id === category.id) {
       setExpandedSub(null);
       setFinalCategories([]);
     } else {
       setExpandedSub(category);
-      if (category.hasChildren) {
-        const final = categoryService.getSubcategories(category.name);
-        setFinalCategories(final.map((name, index) => ({ id: index.toString(), name })));
-      } else {
-        setFinalCategories([]);
-      }
+      // Fetch Level 3 categories
+      const final = await categoryService.getChildCategories(category.id);
+      setFinalCategories(final.map((cat) => ({ id: cat.id, name: cat.name })));
     }
   };
 
-  const handleMainCategorySelect = (category) => {
+  const handleMainCategorySelect = (category: Category) => {
     setSelectedMain(category);
   };
 
-  const handleFinalCategorySelect = (category) => {
+  const handleFinalCategorySelect = (item: { name: string }) => {
     router.push({
       pathname: '/category-books',
       params: {
-        category: expandedSub.name,
-        subcategory: category.name
+        category: item.name // Search directly by the sub-sub-category name
       }
     });
   };
 
-  const renderMainCategory = ({ item }) => (
+  const renderMainCategory = ({ item }: { item: Category }) => (
     <TouchableOpacity
       style={[
         styles.mainCategoryItem,
@@ -84,8 +94,8 @@ export default function CategoriesScreen() {
       ]}
       onPress={() => handleMainCategorySelect(item)}
     >
-      <View style={[styles.mainIcon, { backgroundColor: item.color + '20' }]}>
-        <Ionicons name={item.icon as any} size={20} color={item.color} />
+      <View style={[styles.mainIcon, { backgroundColor: (item.color || Colors.primary) + '20' }]}>
+        <Ionicons name={(item.icon || 'book') as any} size={20} color={item.color || Colors.primary} />
       </View>
       <Text
         style={[
@@ -99,57 +109,63 @@ export default function CategoriesScreen() {
     </TouchableOpacity>
   );
 
-  const renderSubCategory = ({ item }) => (
-    <View style={styles.subCategoryContainer}>
-      <TouchableOpacity
-        style={[
-          styles.subCategoryItem,
-          expandedSub?.id === item.id && styles.expandedSubCategory,
-        ]}
-        onPress={() => toggleSubCategory(item)}
-      >
-        <View style={styles.subCategoryLeft}>
-          <Ionicons
-            name={item.hasChildren ? "folder" : "book"}
-            size={18}
-            color={expandedSub?.id === item.id ? Colors.primary : Colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.subCategoryText,
-              expandedSub?.id === item.id && styles.expandedSubCategoryText,
-            ]}
-          >
-            {item.name}
-          </Text>
-        </View>
-        {item.hasChildren && (
-          <Ionicons
-            name={expandedSub?.id === item.id ? "chevron-up" : "chevron-down"}
-            size={16}
-            color={Colors.textSecondary}
-          />
-        )}
-      </TouchableOpacity>
+  const renderSubCategory = ({ item }: { item: Category }) => {
+    const activeColor = selectedMain?.color || Colors.primary;
+    const isExpanded = expandedSub?.id === item.id;
 
-      {/* Dropdown Content */}
-      {expandedSub?.id === item.id && finalCategories.length > 0 && (
-        <View style={styles.dropdownContent}>
-          {finalCategories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.finalCategoryItem}
-              onPress={() => handleFinalCategorySelect(cat)}
+    return (
+      <View style={styles.subCategoryContainer}>
+        <TouchableOpacity
+          style={[
+            styles.subCategoryItem,
+            isExpanded && { backgroundColor: activeColor + '10', borderColor: activeColor },
+          ]}
+          onPress={() => toggleSubCategory(item)}
+        >
+          <View style={styles.subCategoryLeft}>
+            <Ionicons
+              name={(item.icon || (item.hasChildren ? "folder-outline" : "book-outline")) as any}
+              size={20}
+              color={isExpanded ? activeColor : Colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.subCategoryText,
+                isExpanded && { color: activeColor, fontWeight: '600' },
+              ]}
             >
-              <Ionicons name="book-outline" size={16} color={Colors.textSecondary} />
-              <Text style={styles.finalCategoryText}>{cat.name}</Text>
-              <Ionicons name="chevron-forward" size={14} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
+              {item.name}
+            </Text>
+          </View>
+          {item.hasChildren && (
+            <Ionicons
+              name={isExpanded ? "chevron-up" : "chevron-down"}
+              size={16}
+              color={Colors.textSecondary}
+            />
+          )}
+        </TouchableOpacity>
+
+        {/* Dropdown Content - Now Wrapped Chips */}
+        {isExpanded && finalCategories.length > 0 && (
+          <View style={[styles.dropdownContent, { borderColor: activeColor + '20' }]}>
+            {finalCategories.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.finalCategoryChip,
+                  { backgroundColor: activeColor + '08', borderColor: activeColor + '30' }
+                ]}
+                onPress={() => handleFinalCategorySelect(cat)}
+              >
+                <Text style={[styles.finalCategoryText, { color: activeColor }]}>{cat.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -171,33 +187,34 @@ export default function CategoriesScreen() {
         {/* Right: Sub Categories with Dropdowns */}
         <View style={styles.subCategoriesContainer}>
           {selectedMain && selectedMain.hasChildren && subCategories.length > 0 ? (
-            <>
-              <Text style={styles.mainCategoryTitle}>{selectedMain.name}</Text>
-              <Text style={styles.mainCategoryDescription}>{selectedMain.description}</Text>
-
-              <FlatList
-                data={subCategories}
-                renderItem={renderSubCategory}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.subCategoriesList}
-                ListEmptyComponent={
-                  <View style={styles.noSubCategories}>
-                    <Ionicons name="grid-outline" size={48} color={Colors.textSecondary} />
-                    <Text style={styles.noSubText}>No subcategories</Text>
-                    <TouchableOpacity
-                      style={styles.browseButton}
-                      onPress={() => router.push({
-                        pathname: '/category-books',
-                        params: { category: selectedMain.name }
-                      })}
-                    >
-                      <Text style={styles.browseButtonText}>Browse {selectedMain.name}</Text>
-                    </TouchableOpacity>
-                  </View>
-                }
-              />
-            </>
+            <FlatList
+              data={subCategories}
+              renderItem={renderSubCategory}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.subCategoriesList}
+              ListHeaderComponent={
+                <View>
+                  <Text style={styles.mainCategoryTitle}>{selectedMain.name}</Text>
+                  <Text style={styles.mainCategoryDescription}>{selectedMain.description}</Text>
+                </View>
+              }
+              ListEmptyComponent={
+                <View style={styles.noSubCategories}>
+                  <Ionicons name="grid-outline" size={48} color={Colors.textSecondary} />
+                  <Text style={styles.noSubText}>No subcategories</Text>
+                  <TouchableOpacity
+                    style={styles.browseButton}
+                    onPress={() => router.push({
+                      pathname: '/category-books',
+                      params: { category: selectedMain.name }
+                    })}
+                  >
+                    <Text style={styles.browseButtonText}>Browse {selectedMain.name}</Text>
+                  </TouchableOpacity>
+                </View>
+              }
+            />
           ) : selectedMain && !selectedMain.hasChildren ? (
             <View style={styles.noChildrenContainer}>
               <Ionicons name="book" size={64} color={Colors.textSecondary} />
@@ -239,7 +256,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   mainCategoriesContainer: {
-    width: 100,
+    width: 120,
     backgroundColor: Colors.surface,
     borderRightWidth: 1,
     borderRightColor: Colors.border,
@@ -344,26 +361,29 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 8,
     padding: Spacing.sm,
     marginTop: -1,
-  },
-  finalCategoryItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border + '80',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  finalCategoryChip: {
+    backgroundColor: Colors.surface,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   finalCategoryText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textPrimary,
-    marginLeft: Spacing.sm,
-    flex: 1,
+    fontWeight: '500',
   },
   noSubCategories: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
+    marginTop: 50, // Added margin to center better in list
   },
   noSubText: {
     fontSize: 16,

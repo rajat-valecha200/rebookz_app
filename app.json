@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/reBookz_v1.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",
@@ -45,9 +46,7 @@
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ],
-      [
-        "react-native-maps"
-      ]
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

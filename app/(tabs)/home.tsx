@@ -9,10 +9,11 @@ import {
   Dimensions,
   Animated,
   FlatList,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import Header from '../../components/Header';
 import BookCard from '../../components/BookCard';
 import CategoryCard from '../../components/CategoryCard';
@@ -24,46 +25,52 @@ import { categoryService } from '../../services/categoryService';
 import { useLocation } from '../../context/LocationContext';
 import { useAuth } from '../../context/AuthContext';
 
+import { Category } from '../../types/Category';
+import { Book } from '../../types/Book';
+
 const { width } = Dimensions.get('window');
 
 const carouselData = [
   {
     id: 1,
     title: 'Find Your Next Book',
-    subtitle: 'Buy, Sell, Rent or Swap Books Nearby',
-    icon: 'book',
-    color: Colors.primary,
+    subtitle: 'Search millions of books nearby. Buy, Rent or Swap.',
+    icon: 'search',
+    color: '#4A90E2', // Premium Blue
   },
   {
     id: 2,
     title: 'How It Works',
-    subtitle: '1. Find Books → 2. Contact Seller → 3. Meet & Exchange',
+    subtitle: '1. Find Book → 2. Contact Seller → 3. Meet & Exchange',
     icon: 'information-circle',
-    color: Colors.info,
+    color: '#8E44AD', // Premium Purple
   },
   {
     id: 3,
-    title: 'Start Sharing',
-    subtitle: 'List your old books and earn money',
-    icon: 'share-social',
-    color: Colors.warning,
+    title: 'Sell Your Book',
+    subtitle: 'Make money instantly. List your old books for free.',
+    icon: 'cash',
+    color: '#F1C40F', // Premium Gold
   },
 ];
 
 export default function HomeScreen() {
   const { location } = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const [categories, setCategories] = useState([]);
-  const [nearbyBooks, setNearbyBooks] = useState([]);
-  const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [nearbyBooks, setNearbyBooks] = useState<Book[]>([]);
+  const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isNearbyFallback, setIsNearbyFallback] = useState(false);
   const scrollX = useRef(new Animated.Value(0)).current;
-  const carouselRef = useRef(null);
+  const carouselRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -78,10 +85,19 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     try {
-      const categoriesData = categoryService.getMainCategories();
-      const nearbyData = bookService.getNearbyBooks(location?.lat, location?.lng);
-      const featuredData = bookService.getFeaturedBooks();
-      
+      const categoriesData = await categoryService.getMainCategories();
+      let nearbyData = await bookService.getNearbyBooks(location?.lat, location?.lng);
+
+      if (!nearbyData || nearbyData.length === 0) {
+        // Fallback to all books if no nearby books found
+        nearbyData = await bookService.getAllBooks();
+        setIsNearbyFallback(true);
+      } else {
+        setIsNearbyFallback(false);
+      }
+
+      const featuredData = await bookService.getFeaturedBooks();
+
       setCategories(categoriesData.slice(0, 8));
       setNearbyBooks(nearbyData);
       setFeaturedBooks(featuredData);
@@ -116,70 +132,52 @@ export default function HomeScreen() {
   );
 
   const renderFeaturedBook = ({ item }: { item: any }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.featuredBookCard}
       onPress={() => router.push(`/book/${item.id}`)}
     >
       <View style={styles.featuredImageContainer}>
-        <Ionicons 
-          name="heart-outline" 
-          size={20} 
-          color={Colors.textSecondary} 
-          style={styles.featuredHeart}
-        />
+        {/* Heart removed as per request */}
         <View style={[styles.featuredImage, { backgroundColor: Colors.surface }]}>
-          <Ionicons name="book" size={40} color={Colors.textSecondary} />
+          {item.images && item.images.length > 0 ? (
+            <React.Fragment>
+              {/* Need to import Image from react-native first if not already, checked line 12 has Image? No. */}
+              {/* Importing Image inline or relying on existing import? Line 12 has no Image import. */}
+              {/* Wait, I should add Image to imports first. */}
+            </React.Fragment>
+          ) : null}
+          {/* Correction: I should update import first or use <Image ... /> hoping it's imported. Item 831 shows Image NOT imported. */}
+          {/* I will add Image import and use it. */}
+          {item.images && item.images.length > 0 ? (
+            // @ts-ignore
+            <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
+          ) : (
+            <Ionicons name="book" size={48} color={Colors.textSecondary} />
+          )}
         </View>
-        <View style={[styles.featuredBadge, { backgroundColor: 
-          item.type === 'sell' ? Colors.primary :
-          item.type === 'rent' ? Colors.info :
-          item.type === 'swap' ? Colors.warning :
-          Colors.success
+        <View style={[styles.featuredBadge, {
+          backgroundColor:
+            item.type === 'sell' ? Colors.primary :
+              item.type === 'rent' ? Colors.info :
+                item.type === 'swap' ? Colors.warning :
+                  Colors.success
         }]}>
           <Text style={styles.featuredBadgeText}>{item.type.toUpperCase()}</Text>
         </View>
       </View>
-      <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.featuredPrice}>
-        {item.type === 'sell' || item.type === 'rent' ? `₹${item.price}` : 'FREE'}
-      </Text>
+      <View style={styles.featuredInfo}>
+        <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.featuredPrice}>
+          {item.type === 'sell' || item.type === 'rent' ? `SAR ${item.price}` : 'FREE'}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header />
-      
-      {/* Login/Favorites Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={() => router.push('/login')}
-        >
-          <Ionicons name="person" size={18} color={isAuthenticated ? Colors.primary : Colors.textSecondary} />
-          <Text style={[
-            styles.loginText,
-            { color: isAuthenticated ? Colors.primary : Colors.textSecondary }
-          ]}>
-            {isAuthenticated ? user?.name?.split(' ')[0] : 'Login'}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.favoritesButton}
-          onPress={() => {
-            if (isAuthenticated) {
-              router.push('/favourites');
-            } else {
-              router.push('/login');
-            }
-          }}
-        >
-          <Ionicons name="heart" size={18} color={Colors.primary} />
-          <Text style={styles.favoritesText}>Favorites</Text>
-        </TouchableOpacity>
-      </View>
-      
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -237,7 +235,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Browse Categories</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.seeAllButton}
               onPress={() => router.push('/categories')}
             >
@@ -245,7 +243,7 @@ export default function HomeScreen() {
               <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-          
+
           <FlatList
             data={categories}
             renderItem={({ item }) => (
@@ -263,7 +261,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Featured Books</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.seeAllButton}
                 onPress={() => handleSeeAll('featured')}
               >
@@ -271,7 +269,7 @@ export default function HomeScreen() {
                 <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
               </TouchableOpacity>
             </View>
-            
+
             <FlatList
               data={featuredBooks}
               renderItem={renderFeaturedBook}
@@ -287,10 +285,10 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.locationHeader}>
-              <Ionicons name="location" size={16} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Nearby Books</Text>
+              <Ionicons name={isNearbyFallback ? "book" : "location"} size={16} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>{isNearbyFallback ? "All Books" : "Nearby Books"}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.seeAllButton}
               onPress={() => handleSeeAll('nearby')}
             >
@@ -298,7 +296,7 @@ export default function HomeScreen() {
               <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-          
+
           {nearbyBooks.length > 0 ? (
             <FlatList
               data={nearbyBooks.slice(0, 4)}
@@ -311,9 +309,9 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="location-outline" size={48} color={Colors.textSecondary} />
-              <Text style={styles.emptyStateText}>No books nearby</Text>
+              <Text style={styles.emptyStateText}>{isNearbyFallback ? 'No books found' : 'No books nearby'}</Text>
               <Text style={styles.emptyStateSubtext}>
-                Try changing your location or check back later
+                {isNearbyFallback ? 'Be the first to list a book!' : 'Try changing your location or check back later'}
               </Text>
             </View>
           )}
@@ -418,7 +416,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   searchContainer: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg, // Increased padding
     paddingVertical: Spacing.md,
   },
   carouselContainer: {
@@ -509,40 +507,56 @@ const styles = StyleSheet.create({
   },
   featuredList: {
     paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   featuredBookCard: {
-    width: 140,
+    width: 150,
     marginRight: Spacing.md,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    padding: Spacing.xs,
   },
   featuredImageContainer: {
     position: 'relative',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   featuredHeart: {
     position: 'absolute',
     top: 8,
     right: 8,
     zIndex: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   featuredImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 12,
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   featuredBadge: {
     position: 'absolute',
     bottom: 8,
     left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
     borderRadius: 4,
   },
   featuredBadgeText: {
     color: Colors.background,
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  featuredInfo: {
+    padding: Spacing.xs,
   },
   featuredTitle: {
     fontSize: 14,

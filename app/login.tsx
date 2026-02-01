@@ -22,21 +22,24 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { sendOtp, verifyOtp } = useAuth(); // Updated hook usage
 
   const handleSendOtp = async () => {
-    if (!phone.trim() || phone.length < 10) {
-      Alert.alert('Invalid Phone', 'Please enter a valid 10-digit phone number');
+    if (!phone.trim() || phone.length < 9) { // Saudi numbers usually 9 digits after +966 5...
+      Alert.alert('Invalid Phone', 'Please enter a valid phone number');
       return;
     }
 
     setLoading(true);
-    // Simulate OTP send delay
-    setTimeout(() => {
+    try {
+      await sendOtp(phone); // Call API
       setLoading(false);
       setShowOtp(true);
-      Alert.alert('OTP Sent', `OTP sent to ${phone} (demo: 123456)`);
-    }, 1500);
+      Alert.alert('OTP Sent', `OTP sent to +966 ${phone}`);
+    } catch (error: any) {
+      setLoading(false);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to send OTP');
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -46,17 +49,15 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    // Simulate OTP verification
-    setTimeout(async () => {
-      const success = await login(`+91${phone}`);
+    try {
+      await verifyOtp(phone, otp); // Call API
       setLoading(false);
-      if (success) {
-        Alert.alert('Success', 'Logged in successfully!');
-        router.back();
-      } else {
-        Alert.alert('Error', 'Failed to login. Please try again.');
-      }
-    }, 1500);
+      Alert.alert('Success', 'Logged in successfully!');
+      router.back();
+    } catch (error: any) {
+      setLoading(false);
+      Alert.alert('Error', error.response?.data?.message || 'Invalid OTP');
+    }
   };
 
   const handleSkip = () => {
@@ -65,14 +66,14 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/home')}
           >
             <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
@@ -82,10 +83,12 @@ export default function LoginScreen() {
 
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoText}>
+            <View style={styles.iconContainer}>
+              {/* Minimal Modern Logo */}
+              <Text style={[styles.logoText, { fontSize: 48, marginBottom: 8, color: Colors.textPrimary }]}>
                 Re<Text style={styles.logoOrange}>Bookz</Text>
               </Text>
+              <Ionicons name="book" size={32} color={Colors.primary} />
             </View>
           </View>
 
@@ -97,11 +100,11 @@ export default function LoginScreen() {
             <>
               <View style={styles.inputContainer}>
                 <View style={styles.phonePrefix}>
-                  <Text style={styles.prefixText}>+91</Text>
+                  <Text style={styles.prefixText}>+966</Text>
                 </View>
                 <TextInput
                   style={styles.phoneInput}
-                  placeholder="Enter your phone number"
+                  placeholder="55 123 4567"
                   placeholderTextColor={Colors.textSecondary}
                   value={phone}
                   onChangeText={setPhone}
@@ -129,7 +132,7 @@ export default function LoginScreen() {
           ) : (
             <>
               <View style={styles.otpHeader}>
-                <Text style={styles.phoneDisplay}>OTP sent to +91{phone}</Text>
+                <Text style={styles.phoneDisplay}>OTP sent to +966 {phone}</Text>
                 <TouchableOpacity onPress={() => setShowOtp(false)}>
                   <Text style={styles.changeNumber}>Change Number</Text>
                 </TouchableOpacity>
@@ -162,7 +165,7 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.resendButton}
                 onPress={handleSendOtp}
                 disabled={loading}
@@ -175,11 +178,11 @@ export default function LoginScreen() {
           <View style={styles.demoNote}>
             <Ionicons name="information-circle" size={16} color={Colors.textSecondary} />
             <Text style={styles.demoText}>
-              Demo: Enter any 10-digit number, OTP is 123456
+              Demo: Enter 9876543210, OTP is 123456
             </Text>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.skipButton}
             onPress={handleSkip}
           >

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import Header from '../../components/Header';
 import BookCard from '../../components/BookCard';
 import { Colors } from '../../constants/colors';
@@ -22,23 +22,54 @@ export default function MyBooksScreen() {
   const { user } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'sold'>('active');
+  const [activeCount, setActiveCount] = useState(0);
+  const [soldCount, setSoldCount] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      loadBooks();
-    }
-  }, [user, activeTab]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        loadBooks();
+      }
+    }, [user, activeTab])
+  );
 
-  const loadBooks = () => {
+  const loadBooks = async () => {
     if (!user) return;
-    
-    const userBooks = bookService.getUserBooks(user.id);
-    
+
+    const userBooks = await bookService.getUserBooks(user.id);
+    const active = userBooks.filter(book => book.isAvailable && book.status === 'available');
+    const sold = userBooks.filter(book => !book.isAvailable || book.status !== 'available');
+
+    setActiveCount(active.length);
+    setSoldCount(sold.length);
+
     if (activeTab === 'active') {
-      setBooks(userBooks.filter(book => book.isAvailable && book.status === 'available'));
+      setBooks(active);
     } else {
-      setBooks(userBooks.filter(book => !book.isAvailable || book.status !== 'available'));
+      setBooks(sold);
     }
+  };
+
+  const handleMarkAsSold = (bookId: string) => {
+    Alert.alert(
+      'Mark as Sold',
+      'Are you sure you want to mark this book as sold? It will be moved to your Sold tab.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark as Sold',
+          onPress: async () => {
+            const success = await bookService.updateBook(bookId, {
+              isAvailable: false,
+              status: 'sold'
+            });
+            if (success) {
+              loadBooks();
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleDeleteBook = (bookId: string) => {
@@ -50,8 +81,8 @@ export default function MyBooksScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const success = bookService.deleteBook(bookId);
+          onPress: async () => {
+            const success = await bookService.deleteBook(bookId);
             if (success) {
               loadBooks();
               Alert.alert('Success', 'Book deleted successfully');
@@ -63,17 +94,30 @@ export default function MyBooksScreen() {
   };
 
   const renderBookItem = ({ item }: { item: Book }) => (
-    <BookCard 
-      book={item} 
+    <BookCard
+      book={item}
       showSeller={false}
       showActions={true}
+      onDelete={() => handleDeleteBook(item.id)}
+      onMarkAsSold={() => handleMarkAsSold(item.id)}
     />
   );
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>Please login to view your books</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      
+
       <View style={styles.content}>
         {/* Tabs */}
         <View style={styles.tabs}>
@@ -82,16 +126,16 @@ export default function MyBooksScreen() {
             onPress={() => setActiveTab('active')}
           >
             <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
-              Active ({bookService.getUserBooks(user?.id || '').filter(b => b.isAvailable).length})
+              Active ({activeCount})
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.tab, activeTab === 'sold' && styles.activeTab]}
             onPress={() => setActiveTab('sold')}
           >
             <Text style={[styles.tabText, activeTab === 'sold' && styles.activeTabText]}>
-              Sold ({bookService.getUserBooks(user?.id || '').filter(b => !b.isAvailable).length})
+              Sold ({soldCount})
             </Text>
           </TouchableOpacity>
         </View>
@@ -107,14 +151,14 @@ export default function MyBooksScreen() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons 
-              name={activeTab === 'active' ? "book-outline" : "checkmark-circle"} 
-              size={64} 
-              color={Colors.textSecondary} 
+            <Ionicons
+              name={activeTab === 'active' ? "book-outline" : "checkmark-circle"}
+              size={64}
+              color={Colors.textSecondary}
             />
             <Text style={styles.emptyStateText}>
-              {activeTab === 'active' 
-                ? 'No active books' 
+              {activeTab === 'active'
+                ? 'No active books'
                 : 'No sold books'}
             </Text>
             <Text style={styles.emptyStateSubtext}>
@@ -122,7 +166,7 @@ export default function MyBooksScreen() {
                 ? 'Add your first book to start selling'
                 : 'Books you sell will appear here'}
             </Text>
-            
+
             {activeTab === 'active' && (
               <TouchableOpacity
                 style={styles.addButton}

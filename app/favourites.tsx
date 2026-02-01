@@ -8,16 +8,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 // import Header from '../components/Header';
 import BookCard from '../components/BookCard';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
+import { Book } from '../types/Book';
 
 export default function FavouritesScreen() {
   const { user } = useAuth();
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<Book[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -25,9 +27,9 @@ export default function FavouritesScreen() {
     }
   }, [user]);
 
-  const loadFavorites = () => {
+  const loadFavorites = async () => {
     if (user) {
-      const favs = bookService.getUserFavorites(user.id);
+      const favs = await bookService.getUserFavorites(user.id);
       setFavorites(favs);
     }
   };
@@ -53,7 +55,7 @@ export default function FavouritesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* <Header /> */}
-      
+
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>My Favorites</Text>

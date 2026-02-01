@@ -15,19 +15,20 @@ import BookCard from '../components/BookCard';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
+import { Book } from '../types/Book';
 
 export default function SearchScreen() {
   const params = useLocalSearchParams();
   const [query, setQuery] = useState(params.q?.toString() || '');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Book[]>([]);
   const [isSearching, setIsSearching] = useState(!!params.q);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query.trim()) return;
-    
+
     Keyboard.dismiss();
     setIsSearching(true);
-    const searchResults = bookService.searchBooks(query);
+    const searchResults = await bookService.searchBooks(query);
     setResults(searchResults);
   };
 
@@ -54,7 +55,7 @@ export default function SearchScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
-        
+
         <View style={styles.searchInputContainer}>
           <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
           <TextInput
@@ -67,14 +68,14 @@ export default function SearchScreen() {
             returnKeyType="search"
             autoFocus={!params.q}
           />
-          
+
           {query ? (
             <TouchableOpacity onPress={handleClear}>
               <Ionicons name="close-circle" size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
           ) : null}
         </View>
-        
+
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Text style={styles.searchButtonText}>Search</Text>
         </TouchableOpacity>
@@ -111,23 +112,33 @@ export default function SearchScreen() {
           <Text style={styles.initialStateSubtext}>
             Find books by title, author, or category
           </Text>
-          
+
           {/* Recent Searches (Mock) */}
           <View style={styles.recentSearches}>
             <Text style={styles.recentTitle}>Popular Searches</Text>
-            {['Novels', 'Science Books', 'NEET', 'Children Books', 'Self Help'].map((term, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.recentItem}
-                onPress={() => {
-                  setQuery(term);
-                  handleSearch();
-                }}
-              >
-                <Ionicons name="time" size={16} color={Colors.textSecondary} />
-                <Text style={styles.recentText}>{term}</Text>
-              </TouchableOpacity>
-            ))}
+            {/* Categories Suggestions */}
+            <View style={styles.recentSearches}>
+              <Text style={styles.recentTitle}>Browse Categories</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {['Academic', 'Fiction', 'School Books', 'College Books', 'Competitive Exam', 'Children'].map((cat, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      backgroundColor: Colors.surface,
+                      borderWidth: 1,
+                      borderColor: Colors.border,
+                      marginBottom: 8
+                    }}
+                    onPress={() => router.push({ pathname: '/category-books', params: { category: cat } })}
+                  >
+                    <Text style={{ color: Colors.textPrimary, fontSize: 14 }}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
         </View>
       )}

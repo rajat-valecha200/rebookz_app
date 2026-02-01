@@ -5,62 +5,104 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import Header from '../components/Header';
 import BookCard from '../components/BookCard';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { categoryService } from '../services/categoryService';
+import { Book } from '../types/Book';
+import { Category } from '../types/Category';
+
+import { useLocation } from '../context/LocationContext';
 
 export default function CategoryBooksScreen() {
   const params = useLocalSearchParams();
-  const [books, setBooks] = useState([]);
-  const [category, setCategory] = useState(null);
-  const [filter, setFilter] = useState('all'); // all, nearby, price_low, price_high
+  const { location } = useLocation();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
-    loadBooks();
-  }, [params, filter]);
+    loadData();
+  }, [params.category, params.filter, location]);
 
-  const loadBooks = () => {
-    let booksData = [];
-    
-    if (params.filter === 'nearby') {
-      booksData = bookService.getNearbyBooks();
-    } else if (params.filter === 'featured') {
-      booksData = bookService.getFeaturedBooks();
-    } else if (params.category) {
-      booksData = bookService.getBooksByCategory(params.category as string);
-    } else {
-      booksData = bookService.getAllBooks();
+  const loadData = async () => {
+    // 1. Get Category Details
+    let currentCat: Category | undefined;
+    if (typeof params.category === 'string') {
+      currentCat = await categoryService.getCategoryByName(params.category);
+      setCategory(currentCat || { id: '0', name: params.category, icon: 'book', color: Colors.primary, description: '', hasChildren: false });
     }
 
-    // Apply filters
-    switch (filter) {
-      case 'nearby':
-        booksData = booksData.sort((a, b) => a.distance - b.distance);
-        break;
-      case 'price_low':
-        booksData = booksData.sort((a, b) => (a.price || 0) - (b.price || 0));
-        break;
-      case 'price_high':
-        booksData = booksData.sort((a, b) => (b.price || 0) - (a.price || 0));
-        break;
-      default:
-        booksData = booksData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // 2. Check for Subcategories
+    if (currentCat && currentCat.hasChildren) {
+      const subs = await categoryService.getChildCategories(currentCat.id);
+      if (subs.length > 0) {
+        setSubcategories(subs);
+        setBooks([]);
+        setFilteredBooks([]);
+        return;
+      }
     }
 
-    setBooks(booksData);
+    setSubcategories([]);
 
-    if (params.category) {
-      const cat = categoryService.getCategoryByName(params.category as string);
-      setCategory(cat);
+    try {
+      let booksData: Book[] = [];
+      // Initial Fetch Logic
+      if (params.filter === 'nearby') {
+        booksData = await bookService.getNearbyBooks(location?.lat, location?.lng);
+        setActiveFilter('nearby');
+      } else if (params.filter === 'featured') {
+        booksData = await bookService.getFeaturedBooks();
+      } else if (params.category) {
+        booksData = await bookService.getBooksByCategory(params.category as string);
+      } else {
+        booksData = await bookService.getAllBooks();
+      }
+      setBooks(booksData);
+      setFilteredBooks(booksData);
+    } catch (error) {
+      console.error(error);
     }
   };
+
+  // Filter Logic
+  useEffect(() => {
+    let result = [...books];
+    switch (activeFilter) {
+      case 'nearby':
+        if (location) result = result.sort((a, b) => a.distance - b.distance);
+        break;
+      case 'price_low':
+        result = result.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price_high':
+        result = result.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'sell':
+        result = result.filter(b => b.type === 'sell');
+        break;
+      case 'rent':
+        result = result.filter(b => b.type === 'rent');
+        break;
+      case 'donate':
+        result = result.filter(b => b.type === 'donate');
+        break;
+      default:
+        // Default sort by date
+        result = result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    setFilteredBooks(result);
+  }, [activeFilter, books]);
 
   const getTitle = () => {
     if (params.filter === 'nearby') return 'Nearby Books';
@@ -69,85 +111,78 @@ export default function CategoryBooksScreen() {
     return 'All Books';
   };
 
-  const getDescription = () => {
-    if (params.filter === 'nearby') return 'Books within 5km of your location';
-    if (params.filter === 'featured') return 'Popular and recommended books';
-    if (category) return category.description;
-    return `${books.length} books available`;
-  };
+  const filterOptions = [
+    { id: 'all', label: 'All' },
+    { id: 'nearby', label: 'Nearby' },
+    { id: 'price_low', label: 'Price: Low to High' },
+    { id: 'price_high', label: 'Price: High to Low' },
+    { id: 'sell', label: 'Buy' },
+    { id: 'rent', label: 'Rent' },
+    { id: 'donate', label: 'Free' },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header />
-      
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>{getTitle()}</Text>
-          <Text style={styles.description}>{getDescription()}</Text>
-          
-          {/* Filters */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-            <TouchableOpacity
-              style={[styles.filterButton, filter === 'all' && styles.activeFilter]}
-              onPress={() => setFilter('all')}
-            >
-              <Text style={[styles.filterText, filter === 'all' && styles.activeFilterText]}>
-                All
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.filterButton, filter === 'nearby' && styles.activeFilter]}
-              onPress={() => setFilter('nearby')}
-            >
-              <Ionicons 
-                name="location" 
-                size={16} 
-                color={filter === 'nearby' ? Colors.background : Colors.textSecondary} 
-              />
-              <Text style={[styles.filterText, filter === 'nearby' && styles.activeFilterText]}>
-                Nearby
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.filterButton, filter === 'price_low' && styles.activeFilter]}
-              onPress={() => setFilter('price_low')}
-            >
-              <Text style={[styles.filterText, filter === 'price_low' && styles.activeFilterText]}>
-                Price: Low to High
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.filterButton, filter === 'price_high' && styles.activeFilter]}
-              onPress={() => setFilter('price_high')}
-            >
-              <Text style={[styles.filterText, filter === 'price_high' && styles.activeFilterText]}>
-                Price: High to Low
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+      {/* Custom Header with Back Button */}
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{getTitle()}</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        {/* Books List */}
-        {books.length > 0 ? (
+      <View style={styles.content}>
+        {/* Filter Bar (Only if books exist) */}
+        {books.length > 0 && subcategories.length === 0 && (
+          <View style={styles.filterContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+              {filterOptions.map((opt) => (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={[styles.filterButton, activeFilter === opt.id && styles.activeFilter]}
+                  onPress={() => setActiveFilter(opt.id)}
+                >
+                  <Text style={[styles.filterText, activeFilter === opt.id && styles.activeFilterText]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {subcategories.length > 0 ? (
           <FlatList
-            data={books}
-            renderItem={({ item }) => <BookCard book={item} />}
+            data={subcategories}
             keyExtractor={(item) => item.id}
+            numColumns={2}
             contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.subcategoryCard}
+                onPress={() => router.push({ pathname: '/category-books', params: { category: item.name } })}
+              >
+                <Ionicons name={(item.icon || 'book-outline') as any} size={32} color={item.color || Colors.primary} />
+                <Text style={styles.subcategoryText}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
           />
         ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={64} color={Colors.textSecondary} />
-            <Text style={styles.emptyStateText}>No books found</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Try changing your filters or check back later
-            </Text>
-          </View>
+          filteredBooks.length > 0 ? (
+            <FlatList
+              data={filteredBooks}
+              renderItem={({ item }) => <BookCard book={item} />}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="search-outline" size={64} color={Colors.textSecondary} />
+              <Text style={styles.emptyStateText}>No books found</Text>
+            </View>
+          )
         )}
       </View>
     </SafeAreaView>
@@ -155,6 +190,7 @@ export default function CategoryBooksScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ... existing styles ...
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -162,34 +198,39 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  header: {
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: Spacing.md,
     backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  title: {
-    fontSize: 24,
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
-  description: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.md,
+  filterContainer: {
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.background,
   },
-  filters: {
-    flexDirection: 'row',
+  filtersContent: {
+    paddingHorizontal: Spacing.md,
+    paddingRight: Spacing.xl,
   },
   filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 6,
     marginRight: Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.surface,
   },
   activeFilter: {
     backgroundColor: Colors.primary,
@@ -197,14 +238,33 @@ const styles = StyleSheet.create({
   },
   filterText: {
     color: Colors.textSecondary,
-    fontSize: 14,
-    marginLeft: 4,
+    fontSize: 13,
+    fontWeight: '500',
   },
   activeFilterText: {
     color: Colors.background,
   },
   listContent: {
-    padding: Spacing.md,
+    // padding: Spacing.md,
+  },
+  subcategoryCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    margin: Spacing.xs,
+    padding: Spacing.lg,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  subcategoryText: {
+    marginTop: Spacing.md,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    textAlign: 'center',
   },
   emptyState: {
     flex: 1,
@@ -217,12 +277,5 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: Spacing.md,
     fontWeight: '600',
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: Spacing.sm,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
