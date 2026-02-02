@@ -2,8 +2,6 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// Use localhost for iOS simulator, 10.0.2.2 for Android emulator, or LAN IP for physical device
-// Based on your logs, your IP is 192.168.29.86
 export const SERVER_URL = 'http://192.168.29.86:5001';
 export const API_URL = `${SERVER_URL}/api`;
 
