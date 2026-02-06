@@ -135,34 +135,53 @@ export const bookService = {
     }
   },
 
-  // Toggle favorite (Local Storage for now)
+  // Toggle favorite (Backend)
   toggleFavorite: async (userId: string, bookId: string): Promise<boolean> => {
-    let likes = await storageService.getFavorites() || [];
-    const exists = likes.some(l => l.userId === userId && l.bookId === bookId);
-
-    if (exists) {
-      likes = likes.filter(l => !(l.userId === userId && l.bookId === bookId));
-    } else {
-      likes.push({ userId, bookId });
+    try {
+      const { data } = await api.put(`/users/favorites/${bookId}`);
+      // Optionally update local cache if we want offline support, but for now rely on API
+      return data.isFavorited;
+    } catch (e) {
+      console.error("Toggle Fav Error", e);
+      return false;
     }
-    await storageService.saveFavorites(likes);
-    return !exists;
   },
 
-  // Check if book is favorited
+  // Check if book is favorited (Backend via User Profile or separate API?)
+  // Ideally we should cache "My Favorites" list on app load/login.
+  // For now, let's fetch user profile or assume we have it in AuthContext?
+  // But service doesn't have access to context.
+  // Let's implement a quick check or fetch.
+  // Better approach: fetch all favorites IDs once and check locally?
+  // Or checking individual book status is expensive.
+  // Let's rely on AuthContext user.favorites if available?
+  // Since we can't access Context here easily without passing it, let's make isBookFavorited tricky.
+  // ACTUALLY: The Best Practice is usually to have "My Favorites" loaded in Redux/Context.
+  // But sticking to service:
   isBookFavorited: async (userId: string, bookId: string): Promise<boolean> => {
-    const likes = await storageService.getFavorites() || [];
-    return likes.some(l => l.userId === userId && l.bookId === bookId);
+    // Logic: Fetch user's favorites from backend (or assume synced).
+    // Let's just create a `getFavoritesIds` endpoint or use `getUserFavorites`.
+    const books = await bookService.getUserFavorites(userId);
+    return books.some(b => b.id === bookId);
   },
 
-  // Get user's favorite books
+  // Get user's favorite books (Backend)
   getUserFavorites: async (userId: string): Promise<Book[]> => {
-    const likes = await storageService.getFavorites() || [];
-    const userLikes = likes.filter(l => l.userId === userId).map(l => l.bookId);
-
-    // Fetch all books and filter (Optimize later)
-    const { data } = await api.get('/books');
-    return data.books ? data.books.map(mapBook).filter((b: Book) => userLikes.includes(b.id)) : [];
+    try {
+      // We need an endpoint to get favorite books populated.
+      // Current `toggle` only updates IDs.
+      // We can add `GET /api/users/favorites` which returns populated books.
+      // Let's rely on filter for now if backend doesn't support direct fetch?
+      // Wait, current `User` model has refs.
+      // It's better to add `getFavorites` to backend.
+      // Implementing client-side filter for now (fetch all books + filter by ID from user profile) is inefficient.
+      // Let's assume we add `GET /api/users/favorites` next step.
+      const { data } = await api.get(`/users/favorites`);
+      return data.favorites ? data.favorites.map(mapBook) : [];
+    } catch (error) {
+      console.error("Get Favs Error", error);
+      return [];
+    }
   },
 
   // Get featured books

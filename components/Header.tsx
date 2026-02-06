@@ -13,23 +13,34 @@ interface HeaderProps {
   onBack?: () => void;
 }
 
+import { useTheme } from '../context/ThemeContext';
+
 export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
   const { location } = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { theme, toggleTheme, colors } = useTheme();
+
+  // Dynamic Styles
+  const containerStyle = { backgroundColor: colors.background, borderBottomColor: colors.border };
+  const textPrimaryStyle = { color: colors.textPrimary };
+  const textSecondaryStyle = { color: colors.textSecondary };
+  const surfaceStyle = { backgroundColor: colors.surface, borderColor: colors.border };
+  const headerIconColor = colors.textPrimary; // For most icons
+  const headerActionBg = colors.surface; // Background for action buttons
 
   if (title) {
     return (
-      <View style={[styles.container, styles.simpleHeaderContainer]}>
+      <View style={[styles.container, styles.simpleHeaderContainer, containerStyle]}>
         <View style={styles.simpleHeaderRow}>
           {showBack && (
             <TouchableOpacity
               onPress={onBack || (() => router.back())}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+              <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           )}
-          <Text style={styles.simpleTitle}>{title}</Text>
+          <Text style={[styles.simpleTitle, textPrimaryStyle]}>{title}</Text>
         </View>
       </View>
     );
@@ -60,7 +71,7 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {/* Row 1: Logo & Actions */}
       <View style={styles.topRow}>
         <TouchableOpacity
@@ -73,23 +84,35 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
         </TouchableOpacity>
 
         <View style={styles.actionsContainer}>
+          {/* Theme Toggle Button */}
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => isAuthenticated ? router.push('/favourites') : router.push('/login')}
+            style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
+            onPress={toggleTheme}
           >
-            <Ionicons name="heart-outline" size={22} color={Colors.textPrimary} />
+            <Ionicons
+              name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+              size={20}
+              color={colors.textPrimary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.profileButton, isAuthenticated && styles.profileButtonActive]}
+            style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
+            onPress={() => isAuthenticated ? router.push('/favourites') : router.push('/login')}
+          >
+            <Ionicons name="heart-outline" size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.profileButton, isAuthenticated && styles.profileButtonActive, { backgroundColor: headerActionBg, borderColor: colors.border }]}
             onPress={() => isAuthenticated ? router.push('/account') : router.push('/login')}
           >
             {isAuthenticated ? (
-              <Text style={styles.profileInitials}>
+              <Text style={[styles.profileInitials, { color: colors.textPrimary }]}>
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </Text>
             ) : (
-              <Ionicons name="person-outline" size={20} color={Colors.textPrimary} />
+              <Ionicons name="person-outline" size={20} color={colors.textPrimary} />
             )}
           </TouchableOpacity>
         </View>
@@ -97,13 +120,16 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
 
       {/* Row 2: Location & Tagline */}
       <View style={styles.bottomRow}>
-        <Text style={styles.tagline}>Buy • Sell • Donate</Text>
-        <TouchableOpacity style={styles.locationButton} onPress={handleLocationPress}>
-          <Ionicons name="location-sharp" size={16} color={Colors.primary} />
-          <Text style={styles.locationText} numberOfLines={1}>
+        <Text style={[styles.tagline, textSecondaryStyle]}>Buy • Sell • Donate</Text>
+        <TouchableOpacity
+          style={[styles.locationButton, { backgroundColor: headerActionBg }]}
+          onPress={handleLocationPress}
+        >
+          <Ionicons name="location-sharp" size={16} color={colors.primary} />
+          <Text style={[styles.locationText, textPrimaryStyle]} numberOfLines={1}>
             {getLocationText()}
           </Text>
-          <Ionicons name="chevron-down" size={12} color={Colors.textSecondary} />
+          <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
     </View>

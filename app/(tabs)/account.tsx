@@ -4,9 +4,14 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Switch
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,8 +21,82 @@ import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
 import { bookService } from '../../services/bookService';
+import { useTheme } from '../../context/ThemeContext';
+
 export default function AccountScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
+  const { theme, toggleTheme, colors } = useTheme();
+
+  // Dynamic Styles
+  const containerStyle = { backgroundColor: colors.background };
+  const surfaceStyle = { backgroundColor: colors.surface };
+  const textPrimaryStyle = { color: colors.textPrimary };
+  const textSecondaryStyle = { color: colors.textSecondary };
+  const borderStyle = { borderColor: colors.border };
+  const inputStyle = { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary };
+
+  // Stats State
+  const [stats, setStats] = React.useState([
+    { label: 'Books Listed', value: 0 },
+    { label: 'Books Sold', value: 0 },
+    { label: 'Favorites', value: 0 },
+  ]);
+
+  // Edit Profile State
+  const [modalVisible, setModalVisible] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [editName, setEditName] = React.useState('');
+  const [editEmail, setEditEmail] = React.useState('');
+  const [editDob, setEditDob] = React.useState('');
+  const [editGender, setEditGender] = React.useState('');
+
+  React.useEffect(() => {
+    if (user) {
+      loadStats();
+    }
+  }, [user]);
+
+  const loadStats = async () => {
+    if (!user) return;
+    try {
+      const userBooks = await bookService.getUserBooks(user.id);
+      const favorites = await bookService.getUserFavorites(user.id);
+      setStats([
+        { label: 'Books Listed', value: userBooks.length },
+        { label: 'Books Sold', value: userBooks.filter(b => !b.isAvailable).length },
+        { label: 'Favorites', value: favorites.length },
+      ]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openEditModal = () => {
+    setEditName(user?.name || '');
+    setEditEmail(user?.email || '');
+    setEditDob(user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '');
+    setEditGender(user?.gender || ''); // Assuming User interface has gender now
+    setModalVisible(true);
+  };
+
+  const handleUpdateProfile = async () => {
+    setLoading(true);
+    try {
+      await updateProfile({
+        name: editName,
+        email: editEmail,
+        dob: editDob ? new Date(editDob) : undefined, // Format if needed
+        gender: editGender
+      });
+      Alert.alert('Success', 'Profile updated successfully');
+      setModalVisible(false);
+    } catch (error: any) {
+      Alert.alert('Error', 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -29,12 +108,13 @@ export default function AccountScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/(tabs)/home'); // Ensure we go home after logout
+            router.replace('/(tabs)/home');
           }
         },
       ]
     );
   };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
@@ -52,77 +132,175 @@ export default function AccountScreen() {
       ]
     );
   };
-  const [stats, setStats] = React.useState([
-    { label: 'Books Listed', value: 0 },
-    { label: 'Books Sold', value: 0 },
-    { label: 'Favorites', value: 0 },
-  ]);
+
   const quickAccessItems = [
     { label: 'Favorites', value: stats[2]?.value || 0, icon: 'heart', color: '#FF6B6B', route: '/favourites' },
     { label: 'My Books', value: stats[0]?.value || 0, icon: 'book', color: '#4ECDC4', route: '/(tabs)/my-books' },
     { label: 'Sold', value: stats[1]?.value || 0, icon: 'checkmark-circle', color: '#2ECC71', route: '/(tabs)/my-books' },
   ];
+
   const settingsItems = [
+    {
+      icon: 'people-circle-outline',
+      label: 'Community Requests',
+      onPress: () => router.push('/requests')
+    },
+    {
+      icon: 'moon',
+      label: 'Dark Mode',
+      isSwitch: true,
+      value: theme === 'dark',
+      onValueChange: toggleTheme,
+    },
     {
       icon: 'document-text',
       label: 'Terms & Conditions',
       onPress: () => router.push('/content/terms')
     },
     { icon: 'help-circle', label: 'Help & Support', onPress: () => router.push('/content/help') },
-  ];
-  const aboutItems = [
-    { icon: 'information-circle', label: 'About ReBookz', onPress: () => router.push('/content/about') },
-    // { icon: 'star', label: 'Rate App', onPress: () => { } },
-    // { icon: 'share-social', label: 'Share App', onPress: () => { } },
+    { icon: 'chatbox-ellipses-outline', label: 'Contact Support', onPress: () => router.push('/contact-support') },
   ];
 
-  React.useEffect(() => {
-    if (user) {
-      loadStats();
-    }
-  }, [user]);
-  const loadStats = async () => {
-    if (!user) return;
-    try {
-      const userBooks = await bookService.getUserBooks(user.id);
-      const favorites = await bookService.getUserFavorites(user.id);
-      setStats([
-        { label: 'Books Listed', value: userBooks.length },
-        { label: 'Books Sold', value: userBooks.filter(b => !b.isAvailable).length },
-        { label: 'Favorites', value: favorites.length },
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  const aboutItems = [
+    { icon: 'information-circle', label: 'About ReBookz', onPress: () => router.push('/content/about') },
+  ];
+
+  // Render Edit Modal
+  const renderEditModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, justifyContent: "flex-end" }}
+      >
+        <View style={[styles.modalContainer, surfaceStyle, { borderTopColor: colors.border, borderTopWidth: 1 }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, textPrimaryStyle]}>Edit Profile</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, textSecondaryStyle]}>Display Name</Text>
+              <TextInput
+                style={[styles.modalInput, inputStyle]}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Your Name"
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, textSecondaryStyle]}>Email</Text>
+              <TextInput
+                style={[styles.modalInput, inputStyle]}
+                value={editEmail}
+                onChangeText={setEditEmail}
+                placeholder="Email Address"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.sm }]}>
+                <Text style={[styles.inputLabel, textSecondaryStyle]}>Birth Date (YYYY-MM-DD)</Text>
+                <TextInput
+                  style={[styles.modalInput, inputStyle]}
+                  value={editDob}
+                  onChangeText={setEditDob}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.sm }]}>
+                <Text style={[styles.inputLabel, textSecondaryStyle]}>Gender (male/female)</Text>
+                <TextInput
+                  style={[styles.modalInput, inputStyle]}
+                  value={editGender}
+                  onChangeText={setEditGender}
+                  placeholder="Gender"
+                  placeholderTextColor={colors.textSecondary}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={[styles.saveButtonFull, { backgroundColor: colors.primary }]}
+              onPress={handleUpdateProfile}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save Changes</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  // Guest View
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, containerStyle]}>
         <Header />
         <ScrollView contentContainerStyle={styles.guestContainer}>
           <View style={styles.guestContent}>
-            <Ionicons name="person-circle-outline" size={80} color={Colors.textSecondary} />
-            <Text style={styles.guestTitle}>Welcome Guest</Text>
-            <Text style={styles.guestSubtitle}>Login to manage your books, favorites and profile.</Text>
+            <Ionicons name="person-circle-outline" size={80} color={colors.textSecondary} />
+            <Text style={[styles.guestTitle, textPrimaryStyle]}>Welcome Guest</Text>
+            <Text style={[styles.guestSubtitle, textSecondaryStyle]}>Login to manage your books, favorites and profile.</Text>
             <TouchableOpacity
-              style={styles.loginButton}
+              style={[styles.loginButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/login')}
             >
-              <Text style={styles.loginButtonText}>Login / Register</Text>
+              <Text style={[styles.loginButtonText, { color: colors.background }]}>Login / Register</Text>
             </TouchableOpacity>
           </View>
           {/* Static Settings for Guest */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Support</Text>
-            {settingsItems.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.menuItem} onPress={item.onPress}>
-                <View style={styles.menuLeft}>
-                  <View style={styles.menuIconContainer}>
-                    <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.menuLabel}>{item.label}</Text>
+          <View style={[styles.section, surfaceStyle]}>
+            <Text style={[styles.sectionTitle, textSecondaryStyle]}>Support</Text>
+            <TouchableOpacity style={[styles.menuItem, borderStyle]} onPress={() => router.push('/contact-support')}>
+              <View style={styles.menuLeft}>
+                <View style={[styles.menuIconContainer, { backgroundColor: colors.background }]}>
+                  <Ionicons name="chatbox-ellipses-outline" size={20} color={colors.primary} />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+                <Text style={[styles.menuLabel, textPrimaryStyle]}>Contact Support</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            {settingsItems.filter(i => i.label !== 'Contact Support' && i.label !== 'Community Requests').map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.menuItem, borderStyle]}
+                onPress={item.isSwitch ? toggleTheme : item.onPress}
+                disabled={item.isSwitch}
+              >
+                <View style={styles.menuLeft}>
+                  <View style={[styles.menuIconContainer, { backgroundColor: colors.background }]}>
+                    <Ionicons name={item.icon as any} size={20} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.menuLabel, textPrimaryStyle]}>{item.label}</Text>
+                </View>
+                {item.isSwitch ? (
+                  <Switch
+                    value={item.value}
+                    onValueChange={item.onValueChange}
+                    trackColor={{ false: '#767577', true: colors.primary }}
+                    thumbColor={'#f4f3f4'}
+                  />
+                ) : (
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -130,68 +308,93 @@ export default function AccountScreen() {
       </SafeAreaView>
     );
   }
+
+  // Authenticated View
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, containerStyle]}>
       <Header />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Hi, {user?.name || 'User'}</Text>
-            <Text style={styles.profilePhone}>Mobile: {user?.phone}</Text>
+        <View style={[styles.profileHeader, containerStyle]}>
+          <View style={styles.profileInfoHeader}>
+            <View>
+              <Text style={[styles.profileName, textPrimaryStyle]}>Hi, {user?.name || 'User'}</Text>
+              <Text style={[styles.profilePhone, textSecondaryStyle]}>Mobile: {user?.phone}</Text>
+              <Text style={[styles.profilePhone, textSecondaryStyle, { fontSize: 14, marginTop: 4 }]}>
+                {user?.email || 'No email added'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={openEditModal} style={[styles.editProfileButton, { borderColor: colors.border }]}>
+              <Ionicons name="create-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
           </View>
         </View>
+
+        {renderEditModal()}
+
         {/* Quick Access Grid */}
         <View style={styles.quickAccessContainer}>
           {quickAccessItems.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.quickAccessCard, { backgroundColor: item.color + '15', borderWidth: 1, borderColor: item.color + '30' }]}
+              style={[
+                styles.quickAccessCard,
+                { backgroundColor: item.color + '15', borderWidth: 1, borderColor: item.color + '30' }
+              ]}
               onPress={() => router.push(item.route as any)}
             >
-              <View style={[styles.quickAccessIcon, { backgroundColor: Colors.surface, shadowOpacity: 0.1 }]}>
+              <View style={[styles.quickAccessIcon, { backgroundColor: colors.surface, shadowOpacity: 0.1 }]}>
                 <Ionicons name={item.icon as any} size={24} color={item.color} />
               </View>
               <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={styles.quickAccessValue}>{item.value}</Text>
-                <Text style={styles.quickAccessLabel}>{item.label}</Text>
+                <Text style={[styles.quickAccessValue, textPrimaryStyle]}>{item.value}</Text>
+                <Text style={[styles.quickAccessLabel, textSecondaryStyle]}>{item.label}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
-        {/* Other Stats */}
-        {/* Other Stats Removed - Integrated into Cards */}
+
         {/* General Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>General</Text>
-          {settingsItems.map((item, index) => (
+        <View style={[styles.section, surfaceStyle]}>
+          <Text style={[styles.sectionTitle, textSecondaryStyle]}>General</Text>
+          {settingsItems.map((item: any, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
-              onPress={item.onPress}
+              style={[styles.menuItem, borderStyle]}
+              onPress={item.isSwitch ? toggleTheme : item.onPress}
+              disabled={item.isSwitch}
             >
               <View style={styles.menuLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
+                <View style={[styles.menuIconContainer, { backgroundColor: colors.background }]}>
+                  <Ionicons name={item.icon as any} size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.menuLabel}>{item.label}</Text>
+                <Text style={[styles.menuLabel, textPrimaryStyle]}>{item.label}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              {item.isSwitch ? (
+                <Switch
+                  value={item.value}
+                  onValueChange={item.onValueChange}
+                  trackColor={{ false: '#767577', true: colors.primary }}
+                  thumbColor={'#f4f3f4'}
+                />
+              ) : (
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              )}
             </TouchableOpacity>
           ))}
           {aboutItems.map((item, index) => (
             <TouchableOpacity
               key={`about-${index}`}
-              style={styles.menuItem}
+              style={[styles.menuItem, borderStyle]}
               onPress={item.onPress}
             >
               <View style={styles.menuLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
+                <View style={[styles.menuIconContainer, { backgroundColor: colors.background }]}>
+                  <Ionicons name={item.icon as any} size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.menuLabel}>{item.label}</Text>
+                <Text style={[styles.menuLabel, textPrimaryStyle]}>{item.label}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
           {/* Logout as a list item */}
@@ -200,32 +403,33 @@ export default function AccountScreen() {
             onPress={handleLogout}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIconContainer, { backgroundColor: Colors.danger + '10' }]}>
-                <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
+              <View style={[styles.menuIconContainer, { backgroundColor: colors.danger + '10' }]}>
+                <Ionicons name="log-out-outline" size={20} color={colors.danger} />
               </View>
-              <Text style={[styles.menuLabel, { color: Colors.danger }]}>Logout</Text>
+              <Text style={[styles.menuLabel, { color: colors.danger }]}>Logout</Text>
             </View>
           </TouchableOpacity>
         </View>
+
         {/* Delete Account */}
         <TouchableOpacity
-          style={styles.deleteButtonStyled}
+          style={[styles.deleteButtonStyled, { backgroundColor: colors.surface, borderColor: colors.danger }]}
           onPress={handleDeleteAccount}
         >
-          <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+          <Ionicons name="trash-outline" size={20} color={colors.danger} />
           <Text style={styles.deleteButtonStyledText}>Delete Account</Text>
         </TouchableOpacity>
+
         {/* App Info */}
         <View style={styles.appInfo}>
-          {/* <Text style={styles.appName}>ReBookz</Text>
-          <Text style={styles.appTagline}>Give your books a second life</Text> */}
-          <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.appCopyright}>© {new Date().getFullYear()} ReBookz. All rights reserved.</Text>
+          <Text style={[styles.appVersion, textSecondaryStyle]}>Version 1.0.0</Text>
+          <Text style={[styles.appCopyright, textSecondaryStyle]}>© {new Date().getFullYear()} ReBookz. All rights reserved.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -490,5 +694,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     marginBottom: 2,
+  },
+  modalContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: Spacing.md,
+    minHeight: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  modalContent: {
+    paddingBottom: Spacing.xl,
+  },
+  modalInput: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: Spacing.md,
+    fontSize: 16,
+  },
+  modalFooter: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
+  saveButtonFull: {
+    backgroundColor: Colors.primary,
+    padding: Spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  inputGroup: {
+    marginBottom: Spacing.md,
+    gap: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  profileInfoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  editProfileButton: {
+    padding: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: 20,
   },
 });

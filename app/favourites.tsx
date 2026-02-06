@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 // import Header from '../components/Header';
 import BookCard from '../components/BookCard';
 import { Colors } from '../constants/colors';
@@ -21,11 +21,13 @@ export default function FavouritesScreen() {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<Book[]>([]);
 
-  useEffect(() => {
-    if (user) {
-      loadFavorites();
-    }
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadFavorites();
+      }
+    }, [user])
+  );
 
   const loadFavorites = async () => {
     if (user) {

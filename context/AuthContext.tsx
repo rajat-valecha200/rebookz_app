@@ -11,6 +11,9 @@ interface User {
   email?: string;
   profileImage?: string;
   rating?: number;
+  dob?: string | Date;
+  gender?: string;
+  age?: number;
 }
 
 interface AuthContextType {
@@ -19,6 +22,7 @@ interface AuthContextType {
   isLoading: boolean;
   sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, otp: string) => Promise<void>;
+  updateProfile: (data: any) => Promise<void>;
   logout: () => Promise<void>;
   skipLogin: () => void;
 }
@@ -62,11 +66,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data } = await api.post('/users/verify-otp', { phone, otp });
       // Map _id to id if needed for frontend consistency
-      const userData = data as any;
+      const userData: any = data;
       const user = { ...userData, id: userData._id };
       setUser(user);
       await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
-      router.replace('/(tabs)/home');
+
+      if (userData.isNewUser) {
+        router.replace('/complete-profile');
+      } else {
+        router.replace('/(tabs)/home');
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const updateProfile = async (data: any) => {
+    try {
+      const response = await api.put('/users/profile', data);
+      const userData: any = response.data;
+      const updatedUser = { ...userData, id: userData._id };
+      setUser(updatedUser);
+      await SecureStore.setItemAsync('userInfo', JSON.stringify(updatedUser));
     } catch (error) {
       console.error(error);
       throw error;
@@ -84,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, logout, skipLogin }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin }}>
       {children}
     </AuthContext.Provider>
   );

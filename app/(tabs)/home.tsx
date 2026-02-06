@@ -54,9 +54,19 @@ const carouselData = [
   },
 ];
 
+import { useTheme } from '../../context/ThemeContext';
+
 export default function HomeScreen() {
   const { location } = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { colors } = useTheme(); // Use Theme Hook
+
+  // Dynamic Styles
+  const containerStyle = { backgroundColor: colors.background };
+  const textPrimaryStyle = { color: colors.textPrimary };
+  const textSecondaryStyle = { color: colors.textSecondary };
+  const surfaceStyle = { backgroundColor: colors.surface };
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [nearbyBooks, setNearbyBooks] = useState<Book[]>([]);
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
@@ -120,68 +130,58 @@ export default function HomeScreen() {
   };
 
   const renderCarouselItem = ({ item }: { item: any }) => (
-    <View style={styles.carouselItem}>
+    <View style={[styles.carouselItem, surfaceStyle]}>
       <View style={[styles.carouselIcon, { backgroundColor: item.color }]}>
-        <Ionicons name={item.icon as any} size={28} color={Colors.background} />
+        <Ionicons name={item.icon as any} size={28} color={colors.background} />
       </View>
       <View style={styles.carouselText}>
-        <Text style={styles.carouselTitle}>{item.title}</Text>
-        <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+        <Text style={[styles.carouselTitle, textPrimaryStyle]}>{item.title}</Text>
+        <Text style={[styles.carouselSubtitle, textSecondaryStyle]}>{item.subtitle}</Text>
       </View>
     </View>
   );
 
   const renderFeaturedBook = ({ item }: { item: any }) => (
     <TouchableOpacity
-      style={styles.featuredBookCard}
+      style={[styles.featuredBookCard, { backgroundColor: colors.background }]}
       onPress={() => router.push(`/book/${item.id}`)}
     >
       <View style={styles.featuredImageContainer}>
         {/* Heart removed as per request */}
-        <View style={[styles.featuredImage, { backgroundColor: Colors.surface }]}>
+        <View style={[styles.featuredImage, surfaceStyle]}>
           {item.images && item.images.length > 0 ? (
-            <React.Fragment>
-              {/* Need to import Image from react-native first if not already, checked line 12 has Image? No. */}
-              {/* Importing Image inline or relying on existing import? Line 12 has no Image import. */}
-              {/* Wait, I should add Image to imports first. */}
-            </React.Fragment>
-          ) : null}
-          {/* Correction: I should update import first or use <Image ... /> hoping it's imported. Item 831 shows Image NOT imported. */}
-          {/* I will add Image import and use it. */}
-          {item.images && item.images.length > 0 ? (
-            // @ts-ignore
             <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
           ) : (
-            <Ionicons name="book" size={48} color={Colors.textSecondary} />
+            <Ionicons name="book" size={48} color={colors.textSecondary} />
           )}
         </View>
         <View style={[styles.featuredBadge, {
           backgroundColor:
-            item.type === 'sell' ? Colors.primary :
-              item.type === 'rent' ? Colors.info :
-                item.type === 'swap' ? Colors.warning :
-                  Colors.success
+            item.type === 'sell' ? colors.primary :
+              item.type === 'rent' ? colors.info :
+                item.type === 'swap' ? colors.warning :
+                  colors.success
         }]}>
-          <Text style={styles.featuredBadgeText}>{item.type.toUpperCase()}</Text>
+          <Text style={[styles.featuredBadgeText, { color: colors.surface }]}>{item.type.toUpperCase()}</Text>
         </View>
       </View>
       <View style={styles.featuredInfo}>
-        <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.featuredPrice}>
-          {item.type === 'sell' || item.type === 'rent' ? `SAR ${item.price}` : 'FREE'}
+        <Text style={[styles.featuredTitle, textPrimaryStyle]} numberOfLines={2}>{item.title}</Text>
+        <Text style={[styles.featuredPrice, { color: colors.primary }]}>
+          {item.type === 'sell' || item.type === 'rent' ? `﷼ ${item.price}` : 'FREE'}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, containerStyle]} edges={['top']}>
       <Header />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
         contentContainerStyle={styles.scrollContent}
       >
@@ -223,7 +223,8 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.indicator,
-                    carouselIndex === idx && styles.activeIndicator,
+                    { backgroundColor: colors.border },
+                    carouselIndex === idx && { backgroundColor: colors.primary, width: 20 },
                   ]}
                 />
               </TouchableOpacity>
@@ -234,13 +235,13 @@ export default function HomeScreen() {
         {/* Categories Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Browse Categories</Text>
+            <Text style={[styles.sectionTitle, textPrimaryStyle]}>Browse Categories</Text>
             <TouchableOpacity
               style={styles.seeAllButton}
               onPress={() => router.push('/categories')}
             >
-              <Text style={styles.seeAllText}>See All</Text>
-              <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -260,13 +261,13 @@ export default function HomeScreen() {
         {featuredBooks.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Featured Books</Text>
+              <Text style={[styles.sectionTitle, textPrimaryStyle]}>Featured Books</Text>
               <TouchableOpacity
                 style={styles.seeAllButton}
                 onPress={() => handleSeeAll('featured')}
               >
-                <Text style={styles.seeAllText}>See All</Text>
-                <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
+                <Ionicons name="arrow-forward" size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
 
@@ -285,15 +286,15 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.locationHeader}>
-              <Ionicons name={isNearbyFallback ? "book" : "location"} size={16} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>{isNearbyFallback ? "All Books" : "Nearby Books"}</Text>
+              <Ionicons name={isNearbyFallback ? "book" : "location"} size={16} color={colors.primary} />
+              <Text style={[styles.sectionTitle, textPrimaryStyle]}>{isNearbyFallback ? "All Books" : "Nearby Books"}</Text>
             </View>
             <TouchableOpacity
               style={styles.seeAllButton}
               onPress={() => handleSeeAll('nearby')}
             >
-              <Text style={styles.seeAllText}>See All</Text>
-              <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -308,9 +309,9 @@ export default function HomeScreen() {
             />
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="location-outline" size={48} color={Colors.textSecondary} />
-              <Text style={styles.emptyStateText}>{isNearbyFallback ? 'No books found' : 'No books nearby'}</Text>
-              <Text style={styles.emptyStateSubtext}>
+              <Ionicons name="location-outline" size={48} color={colors.textSecondary} />
+              <Text style={[styles.emptyStateText, textSecondaryStyle]}>{isNearbyFallback ? 'No books found' : 'No books nearby'}</Text>
+              <Text style={[styles.emptyStateSubtext, textSecondaryStyle]}>
                 {isNearbyFallback ? 'Be the first to list a book!' : 'Try changing your location or check back later'}
               </Text>
             </View>
@@ -318,33 +319,33 @@ export default function HomeScreen() {
         </View>
 
         {/* How It Works */}
-        <View style={styles.howItWorks}>
-          <Text style={styles.howItWorksTitle}>How ReBookz Works</Text>
+        <View style={[styles.howItWorks, { backgroundColor: colors.primary + '08' }]}>
+          <Text style={[styles.howItWorksTitle, textPrimaryStyle]}>How ReBookz Works</Text>
           <View style={styles.stepsContainer}>
             <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>1</Text>
+              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.stepNumberText, { color: colors.background }]}>1</Text>
               </View>
-              <Text style={styles.stepTitle}>Browse Books</Text>
-              <Text style={styles.stepDescription}>
+              <Text style={[styles.stepTitle, textPrimaryStyle]}>Browse Books</Text>
+              <Text style={[styles.stepDescription, textSecondaryStyle]}>
                 Search for books by category or use location to find nearby books
               </Text>
             </View>
             <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>2</Text>
+              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.stepNumberText, { color: colors.background }]}>2</Text>
               </View>
-              <Text style={styles.stepTitle}>Contact Seller</Text>
-              <Text style={styles.stepDescription}>
+              <Text style={[styles.stepTitle, textPrimaryStyle]}>Contact Seller</Text>
+              <Text style={[styles.stepDescription, textSecondaryStyle]}>
                 Message directly via WhatsApp or call to discuss details
               </Text>
             </View>
             <View style={styles.step}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>3</Text>
+              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.stepNumberText, { color: colors.background }]}>3</Text>
               </View>
-              <Text style={styles.stepTitle}>Meet & Exchange</Text>
-              <Text style={styles.stepDescription}>
+              <Text style={[styles.stepTitle, textPrimaryStyle]}>Meet & Exchange</Text>
+              <Text style={[styles.stepDescription, textSecondaryStyle]}>
                 Meet in a safe public place to complete the exchange
               </Text>
             </View>
@@ -352,11 +353,11 @@ export default function HomeScreen() {
         </View>
 
         {/* CTA */}
-        <View style={styles.ctaContainer}>
-          <Text style={styles.ctaTitle}>Ready to list your books?</Text>
-          <Text style={styles.ctaText}>Join thousands of users sharing books in your area</Text>
+        <View style={[styles.ctaContainer, { backgroundColor: colors.primary + '10' }]}>
+          <Text style={[styles.ctaTitle, textPrimaryStyle]}>Ready to list your books?</Text>
+          <Text style={[styles.ctaText, textSecondaryStyle]}>Join thousands of users sharing books in your area</Text>
           <TouchableOpacity
-            style={styles.ctaButton}
+            style={[styles.ctaButton, { backgroundColor: colors.primary }]}
             onPress={() => {
               if (isAuthenticated) {
                 router.push('/add-book');
@@ -365,8 +366,8 @@ export default function HomeScreen() {
               }
             }}
           >
-            <Ionicons name="add-circle" size={20} color={Colors.background} />
-            <Text style={styles.ctaButtonText}>List a Book</Text>
+            <Ionicons name="add-circle" size={20} color={colors.background} />
+            <Text style={[styles.ctaButtonText, { color: colors.background }]}>List a Book</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

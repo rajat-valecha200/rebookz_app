@@ -171,7 +171,7 @@ export default function BookCard({
           {/* Price and Condition */}
           <View style={styles.infoRow}>
             {book.type === 'sell' || book.type === 'rent' ? (
-              <Text style={styles.price}>SAR {book.price}</Text>
+              <Text style={styles.price}>﷼ {book.price}</Text>
             ) : (
               <Text style={styles.priceFree}>Free</Text>
             )}
@@ -189,7 +189,7 @@ export default function BookCard({
             {showDistance && (
               <View style={styles.footerItem}>
                 <Ionicons name="location" size={12} color={Colors.textSecondary} />
-                <Text style={styles.footerText}>{book.distance} km</Text>
+                <Text style={styles.footerText}>{book.distance ? book.distance.toFixed(2) : '0.00'} km</Text>
               </View>
             )}
 

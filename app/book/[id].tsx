@@ -154,7 +154,7 @@ export default function BookDetailsScreen() {
           {/* Price and Status */}
           <View style={styles.headerRow}>
             <Text style={styles.price}>
-              {book.type === 'sell' || book.type === 'rent' ? `SAR ${book.price}` : 'FREE'}
+              {book.type === 'sell' || book.type === 'rent' ? `﷼ ${book.price}` : 'FREE'}
             </Text>
             <View style={[
               styles.statusBadge,

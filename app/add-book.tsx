@@ -40,6 +40,11 @@ export default function AddBookScreen() {
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
 
+  // New Fields
+  const [school, setSchool] = useState('');
+  const [board, setBoard] = useState('');
+  const [classLevel, setClassLevel] = useState('');
+
   const [otherDetails, setOtherDetails] = useState('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -99,17 +104,17 @@ export default function AddBookScreen() {
       return;
     }
 
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission required', 'Please allow access to your photos');
+      Alert.alert('Permission required', 'Please allow access to your camera to upload book photos.');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
+      aspect: [3, 4], // Portrait aspect ratio for books
+      quality: 0.6,
     });
 
     if (!result.canceled && result.assets[0].uri) {
@@ -200,7 +205,9 @@ export default function AddBookScreen() {
         type,
         price: (type === 'sell' || type === 'rent') ? parseInt(price) : 0,
         images: imageUrl ? [imageUrl!] : [],
-        // Don't overwrite seller info if editing? Backend likely handles ownership check.
+        school,
+        board,
+        classLevel
       };
 
       if (id) {
@@ -260,8 +267,8 @@ export default function AddBookScreen() {
               ) : (
                 <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
                   <Ionicons name="camera" size={48} color={Colors.textSecondary} />
-                  <Text style={styles.addImageText}>Add Book Image</Text>
-                  <Text style={styles.imageNote}>Tap to select from gallery</Text>
+                  <Text style={styles.addImageText}>Take Book Photo</Text>
+                  <Text style={styles.imageNote}>Camera only (Prevents spam)</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -428,7 +435,7 @@ export default function AddBookScreen() {
 
             {(type === 'sell' || type === 'rent') && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Price (SAR) *</Text>
+                <Text style={styles.label}>Price (﷼) *</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Enter price"

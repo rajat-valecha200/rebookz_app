@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,10 +51,8 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await verifyOtp(phone, otp); // Call API
-      setLoading(false);
-      Alert.alert('Success', 'Logged in successfully!');
-      router.back();
+      await verifyOtp(phone, otp); // Call API - AuthContext handles redirect
+      // setOtp('');
     } catch (error: any) {
       setLoading(false);
       Alert.alert('Error', error.response?.data?.message || 'Invalid OTP');
@@ -81,14 +80,16 @@ export default function LoginScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.iconContainer}>
-            <View style={styles.iconContainer}>
-              {/* Minimal Modern Logo */}
-              <Text style={[styles.logoText, { fontSize: 48, marginBottom: 8, color: Colors.textPrimary }]}>
+            <View style={styles.logoCircle}>
+              <Text style={[styles.logoText, { fontSize: 32 }]}>
                 Re<Text style={styles.logoOrange}>Bookz</Text>
               </Text>
-              <Ionicons name="book" size={32} color={Colors.primary} />
             </View>
           </View>
 
@@ -110,7 +111,7 @@ export default function LoginScreen() {
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
                   maxLength={10}
-                  autoFocus
+                  autoFocus={false}
                 />
               </View>
 
@@ -188,7 +189,9 @@ export default function LoginScreen() {
           >
             <Text style={styles.skipText}>Skip & Continue as Guest</Text>
           </TouchableOpacity>
-        </View>
+
+          <View style={styles.footerSpacer} />
+        </ScrollView>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -229,10 +232,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textPrimary,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
     padding: Spacing.xl,
-    justifyContent: 'center',
+    paddingTop: Spacing.xxl,
   },
   iconContainer: {
     alignItems: 'center',
@@ -367,10 +369,14 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
+  footerSpacer: {
+    height: 40,
+  },
   footer: {
     padding: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+    backgroundColor: Colors.background, // Ensure footer has bg to cover content if scrolling behind
   },
   footerText: {
     fontSize: 12,
