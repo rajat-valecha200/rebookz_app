@@ -23,7 +23,7 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { sendOtp, verifyOtp } = useAuth(); // Updated hook usage
+  const { sendOtp, verifyOtp, googleLogin } = useAuth(); // Updated hook usage
 
   const handleSendOtp = async () => {
     if (!phone.trim() || phone.length < 9) { // Saudi numbers usually 9 digits after +966 5...
@@ -182,6 +182,21 @@ export default function LoginScreen() {
               Demo: Enter 9876543210, OTP is 123456
             </Text>
           </View>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.socialButton, { backgroundColor: '#DB4437' }]}
+            onPress={googleLogin}
+            disabled={loading}
+          >
+            <Ionicons name="logo-google" size={20} color="white" />
+            <Text style={styles.socialButtonText}>Continue with Google</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.skipButton}
@@ -383,5 +398,34 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    marginHorizontal: Spacing.md,
+    color: Colors.textSecondary,
+    fontSize: 14,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+    borderRadius: 12,
+    marginBottom: Spacing.md,
+  },
+  socialButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: Spacing.sm,
   },
 });

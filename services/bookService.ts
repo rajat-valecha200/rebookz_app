@@ -41,6 +41,9 @@ const mapBook = (book: any): Book => {
     isAvailable: book.isAvailable,
     status: book.status || 'available',
     distance: book.distance || 0,
+    school: book.school || '',
+    board: book.board || '',
+    classLevel: book.classLevel || '',
     createdAt: book.createdAt,
   };
 };
@@ -50,7 +53,8 @@ export const bookService = {
   getAllBooks: async (): Promise<Book[]> => {
     try {
       const { data } = await api.get('/books');
-      return data.books ? data.books.map(mapBook) : [];
+      const books = data.books ? data.books.map(mapBook) : [];
+      return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       console.error('Error fetching books', error);
       return [];
@@ -66,7 +70,8 @@ export const bookService = {
       // params.append('radius', '50000'); // Optional
 
       const { data } = await api.get(`/mobile/books?${params.toString()}`);
-      return data.books ? data.books.map(mapBook) : [];
+      const books = data.books ? data.books.map(mapBook) : [];
+      return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       console.error('Error fetching nearby books', error);
       return [];
@@ -77,7 +82,8 @@ export const bookService = {
   getBooksByCategory: async (category: string): Promise<Book[]> => {
     try {
       const { data } = await api.get(`/books?category=${category}`);
-      return data.books ? data.books.map(mapBook) : [];
+      const books = data.books ? data.books.map(mapBook) : [];
+      return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       return [];
     }
@@ -97,7 +103,8 @@ export const bookService = {
   searchBooks: async (query: string): Promise<Book[]> => {
     try {
       const { data } = await api.get(`/books?keyword=${query}`);
-      return data.books ? data.books.map(mapBook) : [];
+      const books = data.books ? data.books.map(mapBook) : [];
+      return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       return [];
     }
@@ -188,7 +195,8 @@ export const bookService = {
   getFeaturedBooks: async (): Promise<Book[]> => {
     try {
       const { data } = await api.get('/books');
-      return data.books ? data.books.map(mapBook).slice(0, 5) : [];
+      const books = data.books ? data.books.map(mapBook) : [];
+      return books.filter((b: Book) => b.status !== 'sold').slice(0, 5);
     } catch (e) { return []; }
   },
 

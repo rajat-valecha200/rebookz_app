@@ -6,7 +6,7 @@ import {
     StyleSheet,
     ActivityIndicator,
     TouchableOpacity,
-    Image
+    Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ import { Spacing } from '../constants/spacing';
 import api from '../services/api';
 
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 interface Request {
     _id: string;
@@ -32,25 +33,26 @@ interface Request {
 
 export default function RequestsScreen() {
     const { colors } = useTheme();
+    const { user: currentUser } = useAuth();
     const [requests, setRequests] = useState<Request[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'all' | 'my'>('all');
 
     // Dynamic Styles
     const containerStyle = { backgroundColor: colors.background };
     const surfaceStyle = { backgroundColor: colors.surface, borderColor: colors.border };
     const textPrimaryStyle = { color: colors.textPrimary };
     const textSecondaryStyle = { color: colors.textSecondary };
-    const borderStyle = { borderColor: colors.border };
-
 
     useEffect(() => {
         fetchRequests();
     }, []);
 
     const fetchRequests = async () => {
+        setLoading(true);
         try {
             const { data } = await api.get('/requests');
-            setRequests(data as any); // Cast to any to avoid unknown type error
+            setRequests(data as any);
         } catch (error) {
             console.error(error);
         } finally {
@@ -58,42 +60,87 @@ export default function RequestsScreen() {
         }
     };
 
-    const renderItem = ({ item }: { item: Request }) => (
-        <View style={[styles.card, surfaceStyle, { borderWidth: 1 }]}>
-            <View style={styles.cardHeader}>
-                <View style={styles.userInfo}>
-                    <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-                        <Text style={[styles.avatarText, textSecondaryStyle]}>{item.user.name.charAt(0)}</Text>
-                    </View>
-                    <View>
-                        <Text style={[styles.userName, textPrimaryStyle]}>{item.user.name}</Text>
-                        <Text style={[styles.date, textSecondaryStyle]}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-                    </View>
-                </View>
-                <View style={styles.badge}>
-                    <Text style={styles.badgeText}>WANTED</Text>
-                </View>
-            </View>
+    const handleDeleteRequest = (requestId: string) => {
+        Alert.alert(
+            'Delete Request',
+            'Are you sure you want to delete this request?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await api.delete(`/requests/${requestId}`);
+                            fetchRequests();
+                            Alert.alert('Success', 'Request deleted successfully');
+                        } catch (error) {
+                            console.error(error);
+                            Alert.alert('Error', 'Failed to delete request');
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
-            <Text style={[styles.title, textPrimaryStyle]}>{item.title}</Text>
-            <Text style={styles.category}>{item.category}</Text>
-            {item.description ? <Text style={[styles.description, textSecondaryStyle]}>{item.description}</Text> : null}
+    const filteredRequests = activeTab === 'all'
+        ? requests.filter((r: Request) => r.user._id !== (currentUser?.id || currentUser?._id))
+        : requests.filter((r: Request) => r.user._id === (currentUser?.id || currentUser?._id));
 
+    const renderItem = ({ item }: { item: Request }) => {
+        const isMyRequest = currentUser && (item.user._id === currentUser.id || item.user._id === currentUser._id);
+
+        return (
             <TouchableOpacity
-                style={[styles.actionButton, { borderTopColor: colors.border }]}
+                style={[styles.card, surfaceStyle, { borderWidth: 1 }]}
+                disabled={!!isMyRequest}
                 onPress={() => {
-                    // Navigate to Chat? Or just show "Contact" modal?
-                    // For now simple alert or navigate to chat if possible.
-                    // Ideally start chat with user.
-                    // router.push(`/chat/${item.user._id}`);
-                    alert('Chat feature coming soon! Contact seller via profile.');
+                    if (!isMyRequest) {
+                        router.push(`/request/${item._id}` as any);
+                    }
                 }}
             >
-                <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.primary} />
-                <Text style={[styles.actionText, { color: colors.primary }]}>I have this book</Text>
+                <View style={styles.cardHeader}>
+                    <View style={styles.userInfo}>
+                        <View style={[styles.avatar, { backgroundColor: colors.border }]}>
+                            <Text style={[styles.avatarText, textSecondaryStyle]}>{item.user.name?.charAt(0) || '?'}</Text>
+                        </View>
+                        <View>
+                            <Text style={[styles.userName, textPrimaryStyle]}>{item.user.name}</Text>
+                            <Text style={[styles.date, textSecondaryStyle]}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.badge}>
+                        <Text style={styles.badgeText}>WANTED</Text>
+                    </View>
+                </View>
+
+                <Text style={[styles.title, textPrimaryStyle]}>{item.title}</Text>
+                <Text style={styles.category}>{item.category}</Text>
+                {item.description ? <Text style={[styles.description, textSecondaryStyle]} numberOfLines={2}>{item.description}</Text> : null}
+
+                {isMyRequest && (
+                    <View style={[styles.actionRow, { borderTopColor: colors.border }]}>
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={() => router.push({ pathname: '/request-book', params: { id: item._id } })}
+                        >
+                            <Ionicons name="create-outline" size={18} color={colors.primary} />
+                            <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={() => handleDeleteRequest(item._id)}
+                        >
+                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                            <Text style={[styles.actionText, { color: colors.danger }]}>Delete</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </TouchableOpacity>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView style={[styles.container, containerStyle]} edges={['top']}>
@@ -107,24 +154,53 @@ export default function RequestsScreen() {
                 </TouchableOpacity>
             </View>
 
+            {/* Tabs */}
+            <View style={[styles.tabs, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'all' && { borderBottomColor: colors.primary }]}
+                    onPress={() => setActiveTab('all')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'all' ? { color: colors.primary, fontWeight: 'bold' } : textSecondaryStyle]}>
+                        All Requests
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'my' && { borderBottomColor: colors.primary }]}
+                    onPress={() => setActiveTab('my')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'my' ? { color: colors.primary, fontWeight: 'bold' } : textSecondaryStyle]}>
+                        My Requests
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
             {loading ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={colors.primary} />
                 </View>
             ) : (
                 <FlatList
-                    data={requests}
+                    data={filteredRequests}
                     renderItem={renderItem}
                     keyExtractor={item => item._id}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.empty}>
                             <Ionicons name="documents-outline" size={48} color={colors.textSecondary} />
-                            <Text style={[styles.emptyText, textSecondaryStyle]}>No requests found.</Text>
+                            <Text style={[styles.emptyText, textSecondaryStyle]}>
+                                {activeTab === 'all' ? 'No requests found.' : "You haven't posted any requests yet."}
+                            </Text>
                         </View>
                     }
                 />
             )}
+
+            <TouchableOpacity
+                style={[styles.fab, { backgroundColor: colors.primary }]}
+                onPress={() => router.push('/request-book')}
+            >
+                <Ionicons name="add" size={30} color="#fff" />
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
@@ -155,8 +231,25 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: Colors.textPrimary,
     },
+    tabs: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.border,
+    },
+    tab: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: Spacing.md,
+        borderBottomWidth: 2,
+        borderBottomColor: 'transparent',
+    },
+    tabText: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+    },
     list: {
         padding: Spacing.md,
+        paddingBottom: 100,
     },
     center: {
         flex: 1,
@@ -232,19 +325,38 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.md,
         lineHeight: 20,
     },
+    actionRow: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: Colors.border,
+        marginTop: Spacing.sm,
+        paddingTop: Spacing.sm,
+        gap: Spacing.md,
+    },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: Spacing.sm,
-        borderTopWidth: 1,
-        borderTopColor: Colors.border,
-        marginTop: Spacing.xs,
+        gap: 4,
     },
     actionText: {
-        marginLeft: Spacing.sm,
-        color: Colors.primary,
+        fontSize: 14,
         fontWeight: '600',
+    },
+    fab: {
+        position: 'absolute',
+        bottom: 24,
+        right: 24,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     empty: {
         alignItems: 'center',
@@ -253,5 +365,7 @@ const styles = StyleSheet.create({
     emptyText: {
         marginTop: Spacing.md,
         color: Colors.textSecondary,
+        textAlign: 'center',
+        paddingHorizontal: Spacing.xl,
     },
 });

@@ -13,6 +13,8 @@ import {
   ActivityIndicator,
   Switch
 } from 'react-native';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -47,8 +49,9 @@ export default function AccountScreen() {
   const [loading, setLoading] = React.useState(false);
   const [editName, setEditName] = React.useState('');
   const [editEmail, setEditEmail] = React.useState('');
-  const [editDob, setEditDob] = React.useState('');
+  const [editDob, setEditDob] = React.useState<Date | undefined>(undefined);
   const [editGender, setEditGender] = React.useState('');
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -74,9 +77,18 @@ export default function AccountScreen() {
   const openEditModal = () => {
     setEditName(user?.name || '');
     setEditEmail(user?.email || '');
-    setEditDob(user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '');
+    setEditDob(user?.dob ? new Date(user.dob) : undefined);
     setEditGender(user?.gender || ''); // Assuming User interface has gender now
     setModalVisible(true);
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setEditDob(selectedDate);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -85,7 +97,7 @@ export default function AccountScreen() {
       await updateProfile({
         name: editName,
         email: editEmail,
-        dob: editDob ? new Date(editDob) : undefined, // Format if needed
+        dob: editDob?.toISOString(), // Format if needed
         gender: editGender
       });
       Alert.alert('Success', 'Profile updated successfully');
@@ -212,25 +224,50 @@ export default function AccountScreen() {
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.sm }]}>
-                <Text style={[styles.inputLabel, textSecondaryStyle]}>Birth Date (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={[styles.modalInput, inputStyle]}
-                  value={editDob}
-                  onChangeText={setEditDob}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <Text style={[styles.inputLabel, textSecondaryStyle]}>Birth Date</Text>
+                <TouchableOpacity
+                  style={[styles.modalInput, inputStyle, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={{ color: editDob ? colors.textPrimary : colors.textSecondary }}>
+                    {editDob ? editDob.toISOString().split('T')[0] : 'Select Date'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <RNDateTimePicker
+                    value={editDob || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                  />
+                )}
+                {Platform.OS === 'ios' && showDatePicker && (
+                  <TouchableOpacity
+                    onPress={() => setShowDatePicker(false)}
+                    style={{ alignItems: 'flex-end', marginTop: 4 }}
+                  >
+                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.sm }]}>
-                <Text style={[styles.inputLabel, textSecondaryStyle]}>Gender (male/female)</Text>
-                <TextInput
-                  style={[styles.modalInput, inputStyle]}
-                  value={editGender}
-                  onChangeText={setEditGender}
-                  placeholder="Gender"
-                  placeholderTextColor={colors.textSecondary}
-                  autoCapitalize="none"
-                />
+                <Text style={[styles.inputLabel, textSecondaryStyle]}>Gender</Text>
+                <View style={[styles.pickerContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <Picker
+                    selectedValue={editGender}
+                    onValueChange={(itemValue) => setEditGender(itemValue)}
+                    style={[styles.picker, { color: colors.textPrimary }]}
+                    dropdownIconColor={colors.textSecondary}
+                  >
+                    <Picker.Item label="Select" value="" />
+                    <Picker.Item label="Male" value="male" />
+                    <Picker.Item label="Female" value="female" />
+                    <Picker.Item label="Other" value="other" />
+                  </Picker>
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -746,6 +783,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  pickerContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
   },
   profileInfoHeader: {
     flexDirection: 'row',

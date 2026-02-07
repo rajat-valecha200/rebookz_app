@@ -19,9 +19,12 @@ import { bookService } from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
 import { Book } from '../../types/Book';
 
+import { useTheme } from '../../context/ThemeContext';
+
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { user, isAuthenticated } = useAuth();
+  const { colors } = useTheme(); // Use Theme Colors
   const [book, setBook] = useState<Book | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const insets = useSafeAreaInsets();
@@ -109,21 +112,21 @@ export default function BookDetailsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
       {/* Header */}
-      <View style={[styles.header]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{book.title}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{book.title}</Text>
         <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShare}
         >
-          <Ionicons name="share-outline" size={22} color={Colors.textPrimary} />
+          <Ionicons name="share-outline" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -144,7 +147,7 @@ export default function BookDetailsScreen() {
             <Ionicons
               name={isFavorite ? "heart" : "heart-outline"}
               size={24}
-              color={isFavorite ? Colors.danger : Colors.background}
+              color={isFavorite ? colors.danger : colors.background}
             />
           </TouchableOpacity>
         </View>
@@ -153,27 +156,27 @@ export default function BookDetailsScreen() {
         <View style={styles.content}>
           {/* Price and Status */}
           <View style={styles.headerRow}>
-            <Text style={styles.price}>
-              {book.type === 'sell' || book.type === 'rent' ? `﷼ ${book.price}` : 'FREE'}
+            <Text style={[styles.price, { color: colors.primary }]}>
+              {book.type === 'sell' || book.type === 'rent' ? `${book.price} SAR` : 'FREE'}
             </Text>
             <View style={[
               styles.statusBadge,
               {
                 backgroundColor:
-                  book.type === 'sell' ? Colors.primary + '20' :
-                    book.type === 'rent' ? Colors.info + '20' :
-                      book.type === 'swap' ? Colors.warning + '20' :
-                        Colors.success + '20'
+                  book.type === 'sell' ? colors.primary + '20' :
+                    book.type === 'rent' ? colors.info + '20' :
+                      book.type === 'swap' ? colors.warning + '20' :
+                        colors.success + '20'
               }
             ]}>
               <Text style={[
                 styles.statusText,
                 {
                   color:
-                    book.type === 'sell' ? Colors.primary :
-                      book.type === 'rent' ? Colors.info :
-                        book.type === 'swap' ? Colors.warning :
-                          Colors.success
+                    book.type === 'sell' ? colors.primary :
+                      book.type === 'rent' ? colors.info :
+                        book.type === 'swap' ? colors.warning :
+                          colors.success
                 }
               ]}>
                 {book.type.toUpperCase()}
@@ -182,40 +185,63 @@ export default function BookDetailsScreen() {
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>{book.title}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{book.title}</Text>
 
           {/* Details */}
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
-              <Ionicons name="bookmark" size={16} color={Colors.textSecondary} />
-              <Text style={styles.detailText}>
+              <Ionicons name="bookmark" size={16} color={colors.textSecondary} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {book.condition.replace('_', ' ').toUpperCase()}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons name="location" size={16} color={Colors.textSecondary} />
-              <Text style={styles.detailText}>{book.distance} km away</Text>
+              <Ionicons name="location" size={16} color={colors.textSecondary} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>{book.distance} km away</Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons name="calendar" size={16} color={Colors.textSecondary} />
-              <Text style={styles.detailText}>Listed {book.createdAt}</Text>
+              <Ionicons name="calendar" size={16} color={colors.textSecondary} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>Listed {book.createdAt}</Text>
             </View>
           </View>
 
           {/* Description */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{book.description}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{book.description}</Text>
           </View>
+
+          {/* School Info */}
+          {book.school && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>School Information</Text>
+              <View style={[styles.sellerCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.detailItem}>
+                  <Ionicons name="school" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary, marginLeft: 8 }]}>
+                    {book.school}
+                  </Text>
+                </View>
+                {book.classLevel && (
+                  <View style={[styles.detailItem, { marginTop: 8 }]}>
+                    <Ionicons name="layers" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.detailText, { color: colors.textSecondary, marginLeft: 8 }]}>
+                      Grade/Class: {book.classLevel}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
 
           {/* Seller Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Seller Information</Text>
-            <View style={styles.sellerCard}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Seller Information</Text>
+            <View style={[styles.sellerCard, { backgroundColor: colors.surface }]}>
               <View style={styles.sellerInfo}>
-                <Text style={styles.sellerName}>{book.sellerName}</Text>
-                <Text style={styles.sellerLocation}>
-                  <Ionicons name="location" size={12} color={Colors.textSecondary} />
+                <Text style={[styles.sellerName, { color: colors.textPrimary }]}>{book.sellerName}</Text>
+                <Text style={[styles.sellerLocation, { color: colors.textSecondary }]}>
+                  <Ionicons name="location" size={12} color={colors.textSecondary} />
                   {` ${book.location.address}`}
                 </Text>
               </View>
@@ -224,16 +250,16 @@ export default function BookDetailsScreen() {
 
           {/* Category Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Category</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Category</Text>
             <View style={styles.categoryInfo}>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{book.category.toUpperCase()}</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
+                <Text style={[styles.categoryText, { color: colors.primary }]}>{book.category.toUpperCase()}</Text>
               </View>
               {book.subcategory && (
                 <>
-                  <Ionicons name="chevron-forward" size={16} color={Colors.textSecondary} />
-                  <View style={styles.subcategoryBadge}>
-                    <Text style={styles.subcategoryText}>{book.subcategory.toUpperCase()}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                  <View style={[styles.subcategoryBadge, { backgroundColor: colors.info + '20' }]}>
+                    <Text style={[styles.subcategoryText, { color: colors.info }]}>{book.subcategory.toUpperCase()}</Text>
                   </View>
                 </>
               )}
@@ -241,10 +267,10 @@ export default function BookDetailsScreen() {
           </View>
 
           {/* Safety Tips */}
-          <View style={styles.safetySection}>
-            <Ionicons name="shield-checkmark" size={20} color={Colors.warning} />
-            <Text style={styles.safetyTitle}>Safety Tips</Text>
-            <Text style={styles.safetyText}>
+          <View style={[styles.safetySection, { backgroundColor: colors.warning + '10' }]}>
+            <Ionicons name="shield-checkmark" size={20} color={colors.warning} />
+            <Text style={[styles.safetyTitle, { color: colors.textPrimary }]}>Safety Tips</Text>
+            <Text style={[styles.safetyText, { color: colors.textSecondary }]}>
               • Meet in public places{'\n'}
               • Inspect the book before exchange{'\n'}
               • Avoid sharing personal information{'\n'}
@@ -255,20 +281,20 @@ export default function BookDetailsScreen() {
       </ScrollView>
 
       {/* Contact Actions - Fixed with safe area */}
-      <View style={[styles.contactActions, { paddingBottom: insets.bottom }]}>
+      <View style={[styles.contactActions, { paddingBottom: insets.bottom, backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.contactButton, styles.callButton]}
+          style={[styles.contactButton, styles.callButton, { backgroundColor: colors.primary }]}
           onPress={handleCallSeller}
         >
-          <Ionicons name="call" size={20} color={Colors.background} />
-          <Text style={styles.contactButtonText}>Call</Text>
+          <Ionicons name="call" size={20} color={colors.background} />
+          <Text style={[styles.contactButtonText, { color: colors.background }]}>Call</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.contactButton, styles.whatsappButton]}
           onPress={handleWhatsApp}
         >
-          <Ionicons name="logo-whatsapp" size={20} color={Colors.background} />
-          <Text style={styles.contactButtonText}>WhatsApp</Text>
+          <Ionicons name="logo-whatsapp" size={20} color={colors.background} />
+          <Text style={[styles.contactButtonText, { color: colors.background }]}>WhatsApp</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

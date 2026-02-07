@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import api from '../services/api';
@@ -23,21 +23,36 @@ import { useTheme } from '../context/ThemeContext';
 export default function RequestBookScreen() {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const params = useLocalSearchParams();
+    const requestId = params.id as string;
+
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
-    // Dynamic Styles
-    const containerStyle = { backgroundColor: colors.background };
-    const surfaceStyle = { backgroundColor: colors.surface, borderColor: colors.border };
-    const textPrimaryStyle = { color: colors.textPrimary };
-    const textSecondaryStyle = { color: colors.textSecondary };
-    const borderStyle = { borderColor: colors.border };
-    const inputStyle = {
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-        color: colors.textPrimary
+    useEffect(() => {
+        if (requestId) {
+            fetchRequestDetails();
+        }
+    }, [requestId]);
+
+    const fetchRequestDetails = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get(`/requests/${requestId}`);
+            const request = data as any;
+            setTitle(request.title);
+            setDescription(request.description || '');
+            setCategory(request.category);
+            setIsEditing(true);
+        } catch (error) {
+            console.error('Error fetching request details:', error);
+            Alert.alert('Error', 'Failed to load request details');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -48,29 +63,51 @@ export default function RequestBookScreen() {
 
         setLoading(true);
         try {
-            await api.post('/requests', {
-                title,
-                description,
-                category
-            });
-            Alert.alert('Success', 'Book request posted! We will notify you if someone lists it.', [
-                { text: 'OK', onPress: () => router.back() }
-            ]);
+            if (isEditing) {
+                await api.put(`/requests/${requestId}`, {
+                    title,
+                    description,
+                    category
+                });
+                Alert.alert('Success', 'Book request updated!', [
+                    { text: 'OK', onPress: () => router.back() }
+                ]);
+            } else {
+                await api.post('/requests', {
+                    title,
+                    description,
+                    category
+                });
+                Alert.alert('Success', 'Book request posted! We will notify you if someone lists it.', [
+                    { text: 'OK', onPress: () => router.back() }
+                ]);
+            }
         } catch (error: any) {
             console.error(error);
-            Alert.alert('Error', error.response?.data?.message || 'Failed to post request');
+            Alert.alert('Error', error.response?.data?.message || 'Failed to save request');
         } finally {
             setLoading(false);
         }
     };
 
+    // Dynamic Styles
+    const containerStyle = { backgroundColor: colors.background };
+    const surfaceStyle = { backgroundColor: colors.surface, borderColor: colors.border };
+    const textPrimaryStyle = { color: colors.textPrimary };
+    const textSecondaryStyle = { color: colors.textSecondary };
+    const inputStyle = {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        color: colors.textPrimary
+    };
+
     return (
         <SafeAreaView style={[styles.container, containerStyle]} edges={['bottom', 'left', 'right']}>
-            <View style={[styles.header, containerStyle, { paddingTop: insets.top, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, containerStyle, { paddingTop: insets.top || 10, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, textPrimaryStyle]}>Request a Book</Text>
+                <Text style={[styles.headerTitle, textPrimaryStyle]}>{isEditing ? 'Edit Request' : 'Request a Book'}</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -79,15 +116,17 @@ export default function RequestBookScreen() {
                 style={{ flex: 1 }}
             >
                 <ScrollView contentContainerStyle={styles.content}>
-                    <View style={[styles.banner, surfaceStyle]}>
-                        <Ionicons name="search-circle" size={48} color={colors.primary} />
-                        <View style={styles.bannerTextContainer}>
-                            <Text style={[styles.bannerTitle, textPrimaryStyle]}>Can't find a book?</Text>
-                            <Text style={[styles.bannerText, textSecondaryStyle]}>
-                                Post a request and we'll notify everyone. Sellers can offer it to you directly.
-                            </Text>
+                    {!isEditing && (
+                        <View style={[styles.banner, surfaceStyle]}>
+                            <Ionicons name="search-circle" size={48} color={colors.primary} />
+                            <View style={styles.bannerTextContainer}>
+                                <Text style={[styles.bannerTitle, textPrimaryStyle]}>Can't find a book?</Text>
+                                <Text style={[styles.bannerText, textSecondaryStyle]}>
+                                    Post a request and we'll notify everyone. Sellers can offer it to you directly.
+                                </Text>
+                            </View>
                         </View>
-                    </View>
+                    )}
 
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>
@@ -137,7 +176,7 @@ export default function RequestBookScreen() {
                         {loading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.submitButtonText}>Post Request</Text>
+                            <Text style={styles.submitButtonText}>{isEditing ? 'Update Request' : 'Post Request'}</Text>
                         )}
                     </TouchableOpacity>
                 </View>

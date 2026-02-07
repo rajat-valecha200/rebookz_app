@@ -7,7 +7,8 @@ import {
     StyleSheet,
     ScrollView,
     Alert,
-    Platform
+    Platform,
+    Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,13 +16,17 @@ import { router } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { useAuth } from '../context/AuthContext';
-
+import { useTheme } from '../context/ThemeContext';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 
 export default function CompleteProfileScreen() {
     const { user, updateProfile } = useAuth();
-    const [name, setName] = useState(user?.name || '');
+    const { colors } = useTheme();
+    const [name, setName] = useState(user?.name === 'New User' ? '' : (user?.name || '')); // Clear "New User" default
     const [email, setEmail] = useState(user?.email || '');
     const [age, setAge] = useState(user?.age?.toString() || '');
+    const [gender, setGender] = useState(user?.gender || 'Male');
     const [dob, setDob] = useState<Date | undefined>(user?.dob ? new Date(user.dob) : undefined);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -38,9 +43,10 @@ export default function CompleteProfileScreen() {
                 name,
                 email,
                 age: parseInt(age),
+                gender,
                 dob: dob?.toISOString()
             });
-            // Navigate to Home or Account
+
             if (router.canGoBack()) {
                 router.back();
             } else {
@@ -54,10 +60,13 @@ export default function CompleteProfileScreen() {
     };
 
     const onDateChange = (event: any, selectedDate?: Date) => {
-        setShowDatePicker(false);
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+
         if (selectedDate) {
             setDob(selectedDate);
-            // Auto calc age?
+            // Auto calc age
             const today = new Date();
             const birthDate = selectedDate;
             let ageCalc = today.getFullYear() - birthDate.getFullYear();
@@ -70,33 +79,35 @@ export default function CompleteProfileScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.title}>Complete Profile</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>Complete Profile</Text>
                 <View style={{ width: 40 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Full Name</Text>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                         value={name}
                         onChangeText={setName}
                         placeholder="Enter your name"
+                        placeholderTextColor={colors.textSecondary}
                     />
                 </View>
 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Email Address</Text>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                         value={email}
                         onChangeText={setEmail}
                         placeholder="Enter your email"
+                        placeholderTextColor={colors.textSecondary}
                         keyboardType="email-address"
                         autoCapitalize="none"
                     />
@@ -104,42 +115,75 @@ export default function CompleteProfileScreen() {
 
                 <View style={styles.row}>
                     <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                        <Text style={styles.label}>Date of Birth (YYYY-MM-DD)</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={dob ? dob.toISOString().split('T')[0] : ''}
-                            onChangeText={(text) => {
-                                const d = new Date(text);
-                                if (!isNaN(d.getTime())) {
-                                    setDob(d);
-                                    // Calc age
-                                    const today = new Date();
-                                    let ageCalc = today.getFullYear() - d.getFullYear();
-                                    const m = today.getMonth() - d.getMonth();
-                                    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) {
-                                        ageCalc--;
-                                    }
-                                    setAge(ageCalc.toString());
-                                }
-                            }}
-                            placeholder="2000-01-01"
-                        />
+                        <Text style={[styles.label, { color: colors.textSecondary }]}>Date of Birth</Text>
+                        <TouchableOpacity
+                            style={[styles.dateInput, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                            onPress={() => setShowDatePicker(true)}
+                        >
+                            <Text style={{ color: dob ? colors.textPrimary : colors.textSecondary }}>
+                                {dob ? dob.toISOString().split('T')[0] : 'Select Date'}
+                            </Text>
+                            <Ionicons name="calendar" size={20} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
+                        {(showDatePicker || (Platform.OS === 'ios' && showDatePicker)) && (
+                            <RNDateTimePicker
+                                value={dob || new Date()}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={onDateChange}
+                                maximumDate={new Date()}
+                            />
+                        )}
+
+                        {/* iOS Modal for DatePicker if needed, or inline logic provided above handles it roughly */}
+                        {Platform.OS === 'ios' && showDatePicker && (
+                            <TouchableOpacity
+                                onPress={() => setShowDatePicker(false)}
+                                style={{ alignItems: 'flex-end', marginTop: 4 }}
+                            >
+                                <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     <View style={[styles.inputGroup, { width: 100 }]}>
-                        <Text style={styles.label}>Age</Text>
+                        <Text style={[styles.label, { color: colors.textSecondary }]}>Age</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                             value={age}
                             onChangeText={setAge}
                             placeholder="Age"
+                            placeholderTextColor={colors.textSecondary}
                             keyboardType="number-pad"
-                            editable={true}
+                            editable={false} // Make read-only as it's calculated
                         />
                     </View>
                 </View>
-                <TouchableOpacity style={styles.saveButton} onPress={handleUpdate} disabled={loading}>
-                    <Text style={styles.saveText}>{loading ? 'Saving...' : 'Save Profile'}</Text>
+
+                <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Gender</Text>
+                    <View style={[styles.pickerContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <Picker
+                            selectedValue={gender}
+                            onValueChange={(itemValue) => setGender(itemValue)}
+                            style={[styles.picker, { color: colors.textPrimary }]}
+                            dropdownIconColor={colors.textSecondary}
+                        >
+                            <Picker.Item label="Select Gender" value="" />
+                            <Picker.Item label="Male" value="male" />
+                            <Picker.Item label="Female" value="female" />
+                            <Picker.Item label="Other" value="other" />
+                        </Picker>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.saveButton, { backgroundColor: colors.primary }]}
+                    onPress={handleUpdate}
+                    disabled={loading}
+                >
+                    <Text style={[styles.saveText, { color: colors.background }]}>{loading ? 'Saving...' : 'Save Profile'}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -197,9 +241,21 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1,
         borderColor: Colors.border,
+        height: 50,
     },
     row: {
         flexDirection: 'row',
+    },
+    pickerContainer: {
+        backgroundColor: Colors.surface,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: Colors.border,
+        overflow: 'hidden',
+    },
+    picker: {
+        height: 50,
+        width: '100%',
     },
     saveButton: {
         backgroundColor: Colors.primary,

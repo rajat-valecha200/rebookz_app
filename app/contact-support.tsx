@@ -18,10 +18,12 @@ import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ContactSupportScreen() {
     const insets = useSafeAreaInsets();
     const { user, isAuthenticated } = useAuth();
+    const { colors } = useTheme();
 
     // Auto-fill if user logged in
     const [email, setEmail] = useState(user?.email || '');
@@ -58,12 +60,12 @@ export default function ContactSupportScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-            <View style={[styles.header, { paddingTop: insets.top }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
+            <View style={[styles.header, { paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="close" size={24} color={Colors.textPrimary} />
+                    <Ionicons name="close" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Contact Support</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Contact Support</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -72,7 +74,7 @@ export default function ContactSupportScreen() {
                 style={{ flex: 1 }}
             >
                 <ScrollView contentContainerStyle={styles.content}>
-                    <Text style={styles.introText}>
+                    <Text style={[styles.introText, { color: colors.textSecondary }]}>
                         We get it, sometimes things go wrong. Let us know how we can help.
                     </Text>
 
@@ -80,10 +82,11 @@ export default function ContactSupportScreen() {
                         {!isAuthenticated && (
                             <>
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.label}>Email Address (Optional)</Text>
+                                    <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address (Optional)</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                                         placeholder="your@email.com"
+                                        placeholderTextColor={colors.textSecondary}
                                         value={email}
                                         onChangeText={setEmail}
                                         keyboardType="email-address"
@@ -91,10 +94,11 @@ export default function ContactSupportScreen() {
                                     />
                                 </View>
                                 <View style={styles.inputGroup}>
-                                    <Text style={styles.label}>Phone Number (Optional)</Text>
+                                    <Text style={[styles.label, { color: colors.textPrimary }]}>Phone Number (Optional)</Text>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                                         placeholder="+966..."
+                                        placeholderTextColor={colors.textSecondary}
                                         value={phone}
                                         onChangeText={setPhone}
                                         keyboardType="phone-pad"
@@ -104,15 +108,23 @@ export default function ContactSupportScreen() {
                         )}
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>What can we help with?</Text>
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>What can we help with?</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
                                 {categories.map(cat => (
                                     <TouchableOpacity
                                         key={cat}
-                                        style={[styles.chip, category === cat && styles.selectedChip]}
+                                        style={[
+                                            styles.chip,
+                                            { backgroundColor: colors.surface, borderColor: colors.border },
+                                            category === cat && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                        ]}
                                         onPress={() => setCategory(cat)}
                                     >
-                                        <Text style={[styles.chipText, category === cat && styles.selectedChipText]}>
+                                        <Text style={[
+                                            styles.chipText,
+                                            { color: colors.textSecondary },
+                                            category === cat && styles.selectedChipText
+                                        ]}>
                                             {cat}
                                         </Text>
                                     </TouchableOpacity>
@@ -121,10 +133,11 @@ export default function ContactSupportScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Description</Text>
+                            <Text style={[styles.label, { color: colors.textPrimary }]}>Description</Text>
                             <TextInput
-                                style={[styles.input, styles.textArea]}
+                                style={[styles.input, styles.textArea, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                                 placeholder="Tell us more about the issue..."
+                                placeholderTextColor={colors.textSecondary}
                                 value={description}
                                 onChangeText={setDescription}
                                 multiline
@@ -135,7 +148,7 @@ export default function ContactSupportScreen() {
                     </View>
                 </ScrollView>
 
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20), backgroundColor: colors.background, borderTopColor: colors.border }]}>
                     <TouchableOpacity
                         style={[styles.submitButton, loading && styles.disabledButton]}
                         onPress={handleSubmit}

@@ -11,11 +11,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Header from '../../components/Header';
 import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 import { Spacing } from '../../constants/spacing';
 import { categoryService } from '../../services/categoryService';
 import { Category } from '../../types/Category';
 
 export default function CategoriesScreen() {
+  const { colors } = useTheme();
   const [mainCategories, setMainCategories] = useState<Category[]>([]);
   const [selectedMain, setSelectedMain] = useState<Category | null>(null);
   const [subCategories, setSubCategories] = useState<Category[]>([]);
@@ -90,17 +92,18 @@ export default function CategoriesScreen() {
     <TouchableOpacity
       style={[
         styles.mainCategoryItem,
-        selectedMain?.id === item.id && styles.selectedMainCategory,
+        selectedMain?.id === item.id && [styles.selectedMainCategory, { backgroundColor: colors.background, borderLeftColor: colors.primary }],
       ]}
       onPress={() => handleMainCategorySelect(item)}
     >
-      <View style={[styles.mainIcon, { backgroundColor: (item.color || Colors.primary) + '20' }]}>
-        <Ionicons name={(item.icon || 'book') as any} size={20} color={item.color || Colors.primary} />
+      <View style={[styles.mainIcon, { backgroundColor: (item.color || colors.primary) + '20' }]}>
+        <Ionicons name={(item.icon || 'book') as any} size={20} color={item.color || colors.primary} />
       </View>
       <Text
         style={[
           styles.mainCategoryText,
-          selectedMain?.id === item.id && styles.selectedMainCategoryText,
+          { color: colors.textSecondary },
+          selectedMain?.id === item.id && [styles.selectedMainCategoryText, { color: colors.primary }],
         ]}
         numberOfLines={2}
       >
@@ -118,6 +121,7 @@ export default function CategoriesScreen() {
         <TouchableOpacity
           style={[
             styles.subCategoryItem,
+            { backgroundColor: colors.surface, borderColor: colors.border },
             isExpanded && { backgroundColor: activeColor + '10', borderColor: activeColor },
           ]}
           onPress={() => toggleSubCategory(item)}
@@ -126,11 +130,12 @@ export default function CategoriesScreen() {
             <Ionicons
               name={(item.icon || (item.hasChildren ? "folder-outline" : "book-outline")) as any}
               size={20}
-              color={isExpanded ? activeColor : Colors.textSecondary}
+              color={isExpanded ? activeColor : colors.textSecondary}
             />
             <Text
               style={[
                 styles.subCategoryText,
+                { color: colors.textSecondary },
                 isExpanded && { color: activeColor, fontWeight: '600' },
               ]}
             >
@@ -141,24 +146,25 @@ export default function CategoriesScreen() {
             <Ionicons
               name={isExpanded ? "chevron-up" : "chevron-down"}
               size={16}
-              color={Colors.textSecondary}
+              color={colors.textSecondary}
             />
           )}
         </TouchableOpacity>
 
         {/* Dropdown Content - Now Wrapped Chips */}
         {isExpanded && finalCategories.length > 0 && (
-          <View style={[styles.dropdownContent, { borderColor: activeColor + '20' }]}>
+          <View style={[styles.dropdownContent, { backgroundColor: colors.background, borderColor: colors.border, borderTopWidth: 0 }]}>
             {finalCategories.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 style={[
                   styles.finalCategoryChip,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
                   { backgroundColor: activeColor + '08', borderColor: activeColor + '30' }
                 ]}
                 onPress={() => handleFinalCategorySelect(cat)}
               >
-                <Text style={[styles.finalCategoryText, { color: activeColor }]}>{cat.name}</Text>
+                <Text style={[styles.finalCategoryText, { color: colors.textPrimary }, { color: activeColor }]}>{cat.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -168,13 +174,13 @@ export default function CategoriesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <Header />
 
       <View style={styles.content}>
         {/* Left: Main Categories */}
-        <View style={styles.mainCategoriesContainer}>
-          <Text style={styles.sidebarTitle}>Categories</Text>
+        <View style={[styles.mainCategoriesContainer, { backgroundColor: colors.surface, borderRightColor: colors.border }]}>
+          <Text style={[styles.sidebarTitle, { color: colors.textPrimary, backgroundColor: colors.surface }]}>Categories</Text>
           <FlatList
             data={mainCategories}
             renderItem={renderMainCategory}
@@ -185,7 +191,7 @@ export default function CategoriesScreen() {
         </View>
 
         {/* Right: Sub Categories with Dropdowns */}
-        <View style={styles.subCategoriesContainer}>
+        <View style={[styles.subCategoriesContainer, { backgroundColor: colors.background }]}>
           {selectedMain && selectedMain.hasChildren && subCategories.length > 0 ? (
             <FlatList
               data={subCategories}
@@ -195,47 +201,47 @@ export default function CategoriesScreen() {
               contentContainerStyle={styles.subCategoriesList}
               ListHeaderComponent={
                 <View>
-                  <Text style={styles.mainCategoryTitle}>{selectedMain.name}</Text>
-                  <Text style={styles.mainCategoryDescription}>{selectedMain.description}</Text>
+                  <Text style={[styles.mainCategoryTitle, { color: colors.textPrimary }]}>{selectedMain.name}</Text>
+                  <Text style={[styles.mainCategoryDescription, { color: colors.textSecondary }]}>{selectedMain.description}</Text>
                 </View>
               }
               ListEmptyComponent={
                 <View style={styles.noSubCategories}>
-                  <Ionicons name="grid-outline" size={48} color={Colors.textSecondary} />
-                  <Text style={styles.noSubText}>No subcategories</Text>
+                  <Ionicons name="grid-outline" size={48} color={colors.textSecondary} />
+                  <Text style={[styles.noSubText, { color: colors.textSecondary }]}>No subcategories</Text>
                   <TouchableOpacity
-                    style={styles.browseButton}
+                    style={[styles.browseButton, { backgroundColor: colors.primary }]}
                     onPress={() => router.push({
                       pathname: '/category-books',
                       params: { category: selectedMain.name }
                     })}
                   >
-                    <Text style={styles.browseButtonText}>Browse {selectedMain.name}</Text>
+                    <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse {selectedMain.name}</Text>
                   </TouchableOpacity>
                 </View>
               }
             />
           ) : selectedMain && !selectedMain.hasChildren ? (
             <View style={styles.noChildrenContainer}>
-              <Ionicons name="book" size={64} color={Colors.textSecondary} />
-              <Text style={styles.noChildrenText}>{selectedMain.name}</Text>
-              <Text style={styles.noChildrenDescription}>
+              <Ionicons name="book" size={64} color={colors.textSecondary} />
+              <Text style={[styles.noChildrenText, { color: colors.textSecondary }]}>{selectedMain.name}</Text>
+              <Text style={[styles.noChildrenDescription, { color: colors.textSecondary }]}>
                 This category doesn't have subcategories
               </Text>
               <TouchableOpacity
-                style={styles.browseButton}
+                style={[styles.browseButton, { backgroundColor: colors.primary }]}
                 onPress={() => router.push({
                   pathname: '/category-books',
                   params: { category: selectedMain.name }
                 })}
               >
-                <Text style={styles.browseButtonText}>Browse {selectedMain.name}</Text>
+                <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse {selectedMain.name}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.selectPrompt}>
-              <Ionicons name="grid-outline" size={64} color={Colors.textSecondary} />
-              <Text style={styles.selectPromptText}>
+              <Ionicons name="grid-outline" size={64} color={colors.textSecondary} />
+              <Text style={[styles.selectPromptText, { color: colors.textSecondary }]}>
                 Select a category from the sidebar
               </Text>
             </View>

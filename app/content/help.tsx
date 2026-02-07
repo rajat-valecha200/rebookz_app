@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
+import { useTheme } from '../../context/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -16,7 +17,7 @@ const faqs = [
     { question: 'How do I contact a seller?', answer: 'Click on a book, and you\'ll see options to Chat (WhatsApp) or Call the seller directly.' },
 ];
 
-const AccordionItem = ({ item }: { item: { question: string, answer: string } }) => {
+const AccordionItem = ({ item, colors }: { item: { question: string, answer: string }, colors: any }) => {
     const [expanded, setExpanded] = useState(false);
 
     const toggleExpand = () => {
@@ -25,14 +26,14 @@ const AccordionItem = ({ item }: { item: { question: string, answer: string } })
     };
 
     return (
-        <View style={styles.accordionItem}>
+        <View style={[styles.accordionItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <TouchableOpacity onPress={toggleExpand} style={styles.accordionHeader}>
-                <Text style={styles.question}>{item.question}</Text>
-                <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.textSecondary} />
+                <Text style={[styles.question, { color: colors.textPrimary }]}>{item.question}</Text>
+                <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
             </TouchableOpacity>
             {expanded && (
-                <View style={styles.accordionBody}>
-                    <Text style={styles.answer}>{item.answer}</Text>
+                <View style={[styles.accordionBody, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.answer, { color: colors.textSecondary }]}>{item.answer}</Text>
                 </View>
             )}
         </View>
@@ -40,46 +41,38 @@ const AccordionItem = ({ item }: { item: { question: string, answer: string } })
 };
 
 export default function HelpScreen() {
+    const { colors } = useTheme();
     const handleEmail = () => Linking.openURL('mailto:support@rebookz.com');
     const handlePhone = () => Linking.openURL('tel:+966501234567');
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Help & Support</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Help & Support</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <Text style={styles.sectionHeader}>Frequently Asked Questions</Text>
+                <Text style={[styles.sectionHeader, { color: colors.textPrimary }]}>Frequently Asked Questions</Text>
                 <View style={styles.faqList}>
                     {faqs.map((faq, index) => (
-                        <AccordionItem key={index} item={faq} />
+                        <AccordionItem key={index} item={faq} colors={colors} />
                     ))}
                 </View>
 
                 <View style={styles.contactSection}>
-                    <Text style={styles.sectionHeader}>Contact Us</Text>
-                    <TouchableOpacity style={styles.contactRow} onPress={handleEmail}>
-                        <View style={styles.contactIcon}>
-                            <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+                    <Text style={[styles.sectionHeader, { color: colors.textPrimary }]}>Contact Us</Text>
+                    <TouchableOpacity style={[styles.contactRow, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={handleEmail}>
+                        <View style={[styles.contactIcon, { backgroundColor: colors.background }]}>
+                            <Ionicons name="mail-outline" size={20} color={colors.primary} />
                         </View>
                         <View>
-                            <Text style={styles.contactLabel}>Email Support</Text>
-                            <Text style={styles.contactValue}>support@rebookz.com</Text>
+                            <Text style={[styles.contactLabel, { color: colors.textSecondary }]}>Email Support</Text>
+                            <Text style={[styles.contactValue, { color: colors.textPrimary }]}>support@rebookz.com</Text>
                         </View>
                     </TouchableOpacity>
-                    {/* <TouchableOpacity style={styles.contactRow} onPress={handlePhone}>
-                        <View style={styles.contactIcon}>
-                            <Ionicons name="call-outline" size={20} color={Colors.primary} />
-                        </View>
-                        <View>
-                            <Text style={styles.contactLabel}>Phone Support</Text>
-                            <Text style={styles.contactValue}>+966 50 123 4567</Text>
-                        </View>
-                    </TouchableOpacity> */}
                 </View>
             </ScrollView>
         </SafeAreaView>

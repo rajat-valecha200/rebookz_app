@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-export const SERVER_URL = 'http://192.168.29.134:5001';
+export const SERVER_URL = 'http://192.168.29.86:5001';
 export const API_URL = `${SERVER_URL}/api`;
 
 // Legacy support if BASE_URL implied API

@@ -5,29 +5,32 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AboutScreen() {
+    const { colors } = useTheme();
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.logoContainer}>
                     {/* Replace with actual logo component or image if available */}
                     <View>
-                        <Text style={styles.logoText}>
+                        <Text style={[styles.logoText, { color: colors.primary }]}>
                             Re<Text style={styles.logoOrange}>Bookz</Text>
                         </Text>
                     </View>
                 </View>
 
-                <Text style={styles.title}>About ReBookz</Text>
-                <Text style={styles.version}>Version 1.0.0</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>About ReBookz</Text>
+                <Text style={[styles.version, { color: colors.textSecondary }]}>Version 1.0.0</Text>
 
-                <Text style={styles.text}>
+                <Text style={[styles.text, { color: colors.textSecondary }]}>
                     ReBookz is a platform for buying, selling, and swapping used books.
                     {'\n\n'}
                     Our mission is to promote reading and sustainability by giving books a second life. Whether you're a student looking for affordable textbooks or a fiction lover hunting for your next adventure, ReBookz connects you with fellow readers in your community.

@@ -24,9 +24,12 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import { BookType, BookCondition } from '../types/Book';
 
+import { useTheme } from '../context/ThemeContext';
+
 export default function AddBookScreen() {
   const { user, isAuthenticated } = useAuth();
   const { location } = useLocation();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
 
@@ -39,10 +42,11 @@ export default function AddBookScreen() {
   const [type, setType] = useState<BookType>('sell');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [subSubcategory, setSubSubcategory] = useState('');
+  const [subSubcategories, setSubSubcategories] = useState<string[]>([]);
 
   // New Fields
-  const [school, setSchool] = useState('');
-  const [board, setBoard] = useState('');
+  const [schoolBoard, setSchoolBoard] = useState('');
   const [classLevel, setClassLevel] = useState('');
 
   const [otherDetails, setOtherDetails] = useState('');
@@ -62,7 +66,6 @@ export default function AddBookScreen() {
     const loadSubs = async () => {
       if (category) {
         const subs = await categoryService.getSubcategories(category);
-        // Ensure 'Other' is an option if subcategories exist
         if (subs.length > 0 && !subs.includes('Other')) {
           setSubcategories([...subs, 'Other']);
         } else {
@@ -71,9 +74,29 @@ export default function AddBookScreen() {
       } else {
         setSubcategories([]);
       }
-    }
+      setSubcategory('');
+      setSubSubcategory('');
+      setSubSubcategories([]);
+    };
     loadSubs();
   }, [category]);
+
+  useEffect(() => {
+    const loadSubSubs = async () => {
+      if (subcategory && subcategory !== 'Other') {
+        const subSubs = await categoryService.getSubcategories(subcategory);
+        if (subSubs.length > 0 && !subSubs.includes('Other')) {
+          setSubSubcategories([...subSubs, 'Other']);
+        } else {
+          setSubSubcategories(subSubs);
+        }
+      } else {
+        setSubSubcategories([]);
+      }
+      setSubSubcategory('');
+    }
+    loadSubSubs();
+  }, [subcategory]);
 
   // Ensure 'Other' main category exists if not already
   const displayCategories = categories.some(c => c.name === 'Other')
@@ -151,6 +174,8 @@ export default function AddBookScreen() {
       setCondition(book.condition);
       setType(book.type);
       setPrice(book.price ? book.price.toString() : '');
+      setSchoolBoard(book.school || '');
+      setClassLevel(book.classLevel || '');
       // Image handling: book.images[0] is a URL.
       // If we don't pick a new one, we should keep existing.
       setImage(book.images[0] || null);
@@ -200,14 +225,13 @@ export default function AddBookScreen() {
         title: title.trim(),
         description: description.trim(),
         category: category,
-        subcategory: subcategory,
+        subcategory: subSubcategory || subcategory || 'Other',
         condition,
         type,
         price: (type === 'sell' || type === 'rent') ? parseInt(price) : 0,
         images: imageUrl ? [imageUrl!] : [],
-        school,
-        board,
-        classLevel
+        school: schoolBoard.trim(),
+        classLevel: classLevel.trim()
       };
 
       if (id) {
@@ -238,7 +262,7 @@ export default function AddBookScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -375,6 +399,31 @@ export default function AddBookScreen() {
               </View>
             )}
 
+            {subcategory && subSubcategories.length > 0 && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Specific Category (Optional)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {subSubcategories.map((sub, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.subcategoryButton,
+                        subSubcategory === sub && styles.selectedSubcategoryButton,
+                      ]}
+                      onPress={() => setSubSubcategory(sub)}
+                    >
+                      <Text style={[
+                        styles.subcategoryButtonText,
+                        subSubcategory === sub && styles.selectedSubcategoryButtonText,
+                      ]}>
+                        {sub}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Book Condition</Text>
               <View style={styles.conditionGrid}>
@@ -435,7 +484,7 @@ export default function AddBookScreen() {
 
             {(type === 'sell' || type === 'rent') && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Price (﷼) *</Text>
+                <Text style={styles.label}>Price (SAR) *</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Enter price"
@@ -445,6 +494,22 @@ export default function AddBookScreen() {
                 />
               </View>
             )}
+          </View>
+
+          {/* School/Board Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>School Information (Optional)</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>School Name/Board</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: Colors.surface, color: Colors.textPrimary, borderColor: Colors.border }]}
+                placeholder="e.g. DPS Riyadh / CBSE"
+                value={schoolBoard}
+                onChangeText={setSchoolBoard}
+                placeholderTextColor={Colors.textSecondary}
+              />
+            </View>
           </View>
 
           {/* Terms */}

@@ -14,7 +14,7 @@ import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
-import { categoryService } from '../services/categoryService';
+import { useTheme } from '../context/ThemeContext';
 
 interface BookCardProps {
   book: Book;
@@ -34,6 +34,7 @@ export default function BookCard({
   onMarkAsSold
 }: BookCardProps) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [showInlineActions, setShowInlineActions] = React.useState(false);
   const isMyBook = user && user.id === book.sellerId;
@@ -56,18 +57,69 @@ export default function BookCard({
       const newStatus = await bookService.toggleFavorite(user.id, book.id);
       setIsFavorite(newStatus);
     } else {
-      router.push('/account');
+      router.push('/login');
     }
+  };
+
+  const handleMarkAsSoldLocal = () => {
+    if (onMarkAsSold) {
+      onMarkAsSold();
+      return;
+    }
+    Alert.alert(
+      'Mark as Sold',
+      'Are you sure you want to mark this book as sold?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark as Sold',
+          onPress: async () => {
+            const success = await bookService.updateBook(book.id, { isAvailable: false, status: 'sold' });
+            if (success) {
+              Alert.alert('Success', 'Book marked as sold');
+            } else {
+              Alert.alert('Error', 'Failed to update book status');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteLocal = () => {
+    if (onDelete) {
+      onDelete();
+      return;
+    }
+    Alert.alert(
+      'Delete Book',
+      'Are you sure you want to delete this book? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await bookService.deleteBook(book.id);
+            if (success) {
+              Alert.alert('Success', 'Book deleted');
+            } else {
+              Alert.alert('Error', 'Failed to delete book');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getConditionColor = (condition: Book['condition']) => {
     switch (condition) {
-      case 'new': return Colors.success;
-      case 'like_new': return Colors.info;
-      case 'good': return Colors.primary;
-      case 'fair': return Colors.warning;
-      case 'poor': return Colors.danger;
-      default: return Colors.textSecondary;
+      case 'new': return colors.success;
+      case 'like_new': return colors.info;
+      case 'good': return colors.primary;
+      case 'fair': return colors.warning;
+      case 'poor': return colors.danger;
+      default: return colors.textSecondary;
     }
   };
 
@@ -83,11 +135,11 @@ export default function BookCard({
 
   const getTypeColor = (type: Book['type']) => {
     switch (type) {
-      case 'sell': return Colors.primary;
-      case 'rent': return Colors.info;
-      case 'swap': return Colors.warning;
-      case 'donate': return Colors.success;
-      default: return Colors.textSecondary;
+      case 'sell': return colors.primary;
+      case 'rent': return colors.info;
+      case 'swap': return colors.warning;
+      case 'donate': return colors.success;
+      default: return colors.textSecondary;
     }
   };
 
@@ -97,7 +149,7 @@ export default function BookCard({
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background, borderColor: colors.border }]}
       onPress={() => router.push(`/book/${book.id}`)}
     >
       <View style={styles.content}>
@@ -107,11 +159,10 @@ export default function BookCard({
             <Image
               source={{ uri: book.images[0] }}
               style={styles.image}
-              defaultSource={require('../assets/images/placeholder-book.png')}
             />
           ) : (
-            <View style={[styles.image, styles.placeholderImage]}>
-              <Ionicons name="book" size={40} color={Colors.textSecondary} />
+            <View style={[styles.image, styles.placeholderImage, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="book" size={40} color={colors.textSecondary} />
             </View>
           )}
 
@@ -125,18 +176,18 @@ export default function BookCard({
         <View style={styles.detailsContainer}>
           {/* Title and Action Row */}
           <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>{book.title}</Text>
 
             {isMyBook ? (
               <TouchableOpacity
                 style={styles.favoriteButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 onPress={() => setShowInlineActions(!showInlineActions)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons
                   name={showInlineActions ? "close-circle" : "ellipsis-vertical"}
                   size={20}
-                  color={Colors.textPrimary}
+                  color={colors.textPrimary}
                 />
               </TouchableOpacity>
             ) : (
@@ -148,7 +199,7 @@ export default function BookCard({
                 <Ionicons
                   name={isFavorite ? "heart" : "heart-outline"}
                   size={20}
-                  color={isFavorite ? Colors.danger : Colors.textPrimary}
+                  color={isFavorite ? colors.danger : colors.textPrimary}
                 />
               </TouchableOpacity>
             )}
@@ -156,29 +207,35 @@ export default function BookCard({
 
           {/* Category and Type */}
           <View style={styles.categoryRow}>
-            <View style={[styles.categoryBadge, { backgroundColor: Colors.surface }]}>
-              <Text style={styles.categoryText}>{getCategoryName()}</Text>
+            <View style={[styles.categoryBadge, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.categoryText, { color: colors.textSecondary }]}>{getCategoryName()}</Text>
             </View>
-            <Text style={styles.separator}>•</Text>
-            <Text style={styles.typeLabel}>{getTypeLabel(book.type)}</Text>
+            <Text style={[styles.separator, { color: colors.textSecondary }]}>•</Text>
+            <Text style={[styles.typeLabel, { color: colors.textSecondary }]}>{getTypeLabel(book.type)}</Text>
+            {book.school && (
+              <>
+                <Text style={[styles.separator, { color: colors.textSecondary }]}>•</Text>
+                <Text style={[styles.typeLabel, { color: colors.textSecondary }]} numberOfLines={1}>{book.school}</Text>
+              </>
+            )}
           </View>
 
           {/* Description */}
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
             {book.description}
           </Text>
 
           {/* Price and Condition */}
           <View style={styles.infoRow}>
             {book.type === 'sell' || book.type === 'rent' ? (
-              <Text style={styles.price}>﷼ {book.price}</Text>
+              <Text style={[styles.price, { color: colors.primary }]}>{book.price} SAR</Text>
             ) : (
-              <Text style={styles.priceFree}>Free</Text>
+              <Text style={[styles.priceFree, { color: colors.success }]}>Free</Text>
             )}
 
             <View style={styles.conditionContainer}>
               <View style={[styles.conditionDot, { backgroundColor: getConditionColor(book.condition) }]} />
-              <Text style={styles.conditionText}>
+              <Text style={[styles.conditionText, { color: colors.textSecondary }]}>
                 {book.condition.replace('_', ' ')}
               </Text>
             </View>
@@ -188,68 +245,66 @@ export default function BookCard({
           <View style={styles.footer}>
             {showDistance && (
               <View style={styles.footerItem}>
-                <Ionicons name="location" size={12} color={Colors.textSecondary} />
-                <Text style={styles.footerText}>{book.distance ? book.distance.toFixed(2) : '0.00'} km</Text>
+                <Ionicons name="location" size={12} color={colors.textSecondary} />
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>{book.distance ? book.distance.toFixed(2) : '0.00'} km</Text>
               </View>
             )}
 
             {showSeller && !isMyBook && (
               <View style={styles.footerItem}>
-                <Ionicons name="person" size={12} color={Colors.textSecondary} />
-                <Text style={styles.footerText}>{book.sellerName}</Text>
+                <Ionicons name="person" size={12} color={colors.textSecondary} />
+                <Text style={[styles.footerText, { color: colors.textSecondary }]}>{book.sellerName}</Text>
               </View>
             )}
 
             {isMyBook && !showInlineActions && (
-              <Text style={styles.myBookText}>Your Book</Text>
+              <Text style={[styles.myBookText, { color: colors.primary }]}>Your Book</Text>
             )}
           </View>
 
-          {/* Inline Actions Row */}
-          {showInlineActions && isMyBook && (
+          {/* Inline Actions Row for My Books */}
+          {isMyBook && showInlineActions && (
             <View style={styles.inlineActionsRow}>
               <TouchableOpacity
-                style={[styles.actionButton, styles.editButton]}
+                style={[styles.actionButton, styles.editButton, { backgroundColor: colors.primary + '15' }]}
                 onPress={() => router.push({ pathname: '/add-book', params: { id: book.id } })}
               >
-                <Ionicons name="create-outline" size={16} color={Colors.primary} />
-                <Text style={[styles.actionText, { color: Colors.primary }]}>Edit</Text>
+                <Ionicons name="create-outline" size={16} color={colors.primary} />
+                <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
               </TouchableOpacity>
 
-              {book.isAvailable && onMarkAsSold && (
+              {book.status === 'available' && (
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.soldButton]}
-                  onPress={onMarkAsSold}
+                  style={[styles.actionButton, styles.soldButton, { backgroundColor: colors.success + '15' }]}
+                  onPress={handleMarkAsSoldLocal}
                 >
-                  <Ionicons name="checkmark-circle-outline" size={16} color={Colors.success} />
-                  <Text style={[styles.actionText, { color: Colors.success }]}>Sold</Text>
+                  <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} />
+                  <Text style={[styles.actionText, { color: colors.success }]}>Sold</Text>
                 </TouchableOpacity>
               )}
 
               <TouchableOpacity
-                style={[styles.actionButton, styles.deleteButton]}
-                onPress={onDelete}
+                style={[styles.actionButton, styles.deleteButton, { backgroundColor: colors.danger + '15' }]}
+                onPress={handleDeleteLocal}
               >
-                <Ionicons name="trash-outline" size={16} color={Colors.danger} />
-                <Text style={[styles.actionText, { color: Colors.danger }]}>Delete</Text>
+                <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                <Text style={[styles.actionText, { color: colors.danger }]}>Delete</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
       </View>
-    </TouchableOpacity >
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.background,
     borderRadius: 12,
     marginHorizontal: Spacing.md,
     marginVertical: Spacing.xs,
     padding: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -269,11 +324,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   placeholderImage: {
-    backgroundColor: Colors.surface,
+    width: 90,
+    height: 120,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   typeBadge: {
     position: 'absolute',
@@ -284,7 +340,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   typeText: {
-    color: Colors.background,
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '600',
   },
@@ -306,7 +362,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textPrimary,
   },
   categoryRow: {
     flexDirection: 'row',
@@ -320,20 +375,16 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: Colors.textSecondary,
     fontWeight: '500',
   },
   separator: {
-    color: Colors.textSecondary,
     marginHorizontal: 6,
   },
   typeLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
   description: {
     fontSize: 14,
-    color: Colors.textSecondary,
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -346,12 +397,10 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.primary,
   },
   priceFree: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.success,
   },
   conditionContainer: {
     flexDirection: 'row',
@@ -365,7 +414,6 @@ const styles = StyleSheet.create({
   },
   conditionText: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
   footer: {
     flexDirection: 'row',
@@ -378,32 +426,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginLeft: 4,
   },
   myBookText: {
     fontSize: 12,
-    color: Colors.primary,
     fontWeight: '500',
-  },
-  actionsContainer: {
-    position: 'absolute',
-    bottom: 8,
-    right: 40, // Left of favorite button if favorite is there? favorite is top right now.
-    // Wait, previous edit moved favorite to Title Row.
-    // So bottom right is free?
-    // The footer has distance/seller.
-    // Let's just put it in the footer area or below?
-    // The previous implementation was a separate row below content.
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 0,
-    paddingTop: 0,
-    borderTopWidth: 0,
-  },
-  moreButton: {
-    padding: 4,
-    marginLeft: 4,
   },
   inlineActionsRow: {
     flexDirection: 'row',
@@ -419,13 +446,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   editButton: {
-    backgroundColor: Colors.primary + '10',
   },
   soldButton: {
-    backgroundColor: Colors.success + '10',
   },
   deleteButton: {
-    backgroundColor: Colors.danger + '10',
   },
   actionText: {
     fontSize: 12,

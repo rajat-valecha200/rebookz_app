@@ -34,23 +34,53 @@ const carouselData = [
   {
     id: 1,
     title: 'Find Your Next Book',
-    subtitle: 'Search millions of books nearby. Buy, Rent or Swap.',
+    subtitle: 'Search millions of books nearby. Buy, Rent or Swap with ease.',
     icon: 'search',
     color: '#4A90E2', // Premium Blue
+    cta: 'Explore Now',
+    bgIcon: 'book-outline'
   },
   {
     id: 2,
     title: 'How It Works',
-    subtitle: '1. Find Book → 2. Contact Seller → 3. Meet & Exchange',
+    subtitle: 'Discover → Connect → Exchange. Simplified for everyone.',
     icon: 'information-circle',
     color: '#8E44AD', // Premium Purple
+    cta: 'Learn More',
+    bgIcon: 'help-circle-outline'
   },
   {
     id: 3,
     title: 'Sell Your Book',
-    subtitle: 'Make money instantly. List your old books for free.',
+    subtitle: 'Turn your old books into cash or swap for something new.',
     icon: 'cash',
     color: '#F1C40F', // Premium Gold
+    cta: 'List Now',
+    bgIcon: 'pricetag-outline'
+  },
+];
+
+const howItWorksSteps = [
+  {
+    id: 1,
+    title: 'Browse Books',
+    description: 'Search for books by category or use location to find nearby books',
+    icon: 'search-outline',
+    color: '#4A90E2', // Blue
+  },
+  {
+    id: 2,
+    title: 'Contact Seller',
+    description: 'Message directly via WhatsApp or call to discuss details',
+    icon: 'logo-whatsapp',
+    color: '#25D366', // Green
+  },
+  {
+    id: 3,
+    title: 'Meet & Exchange',
+    description: 'Meet in a safe public place to complete the exchange',
+    icon: 'people-outline',
+    color: '#E67E22', // Orange
   },
 ];
 
@@ -130,20 +160,41 @@ export default function HomeScreen() {
   };
 
   const renderCarouselItem = ({ item }: { item: any }) => (
-    <View style={[styles.carouselItem, surfaceStyle]}>
-      <View style={[styles.carouselIcon, { backgroundColor: item.color }]}>
-        <Ionicons name={item.icon as any} size={28} color={colors.background} />
-      </View>
-      <View style={styles.carouselText}>
-        <Text style={[styles.carouselTitle, textPrimaryStyle]}>{item.title}</Text>
-        <Text style={[styles.carouselSubtitle, textSecondaryStyle]}>{item.subtitle}</Text>
-      </View>
+    <View style={styles.carouselItem}>
+      <TouchableOpacity
+        style={[styles.carouselCard, { backgroundColor: item.color }]}
+        onPress={() => {
+          if (item.id === 1) handleSeeAll('all');
+          else if (item.id === 2) { /* Scroll logic */ }
+          else if (item.id === 3) router.push('/add-book');
+        }}
+        activeOpacity={0.9}
+      >
+        <View style={styles.carouselCardInner}>
+          <View style={styles.carouselContent}>
+            <View style={styles.carouselTextContainer}>
+              <Text style={styles.carouselTitlePremium}>{item.title}</Text>
+              <Text style={styles.carouselSubtitlePremium}>{item.subtitle}</Text>
+              <View style={styles.carouselCtaContainer}>
+                <Text style={styles.carouselCtaText}>{item.cta}</Text>
+                <Ionicons name="arrow-forward" size={14} color="#fff" />
+              </View>
+            </View>
+            <View style={styles.carouselIconContainerLarge}>
+              <Ionicons name={item.bgIcon as any} size={80} color="rgba(255,255,255,0.15)" style={styles.bgIconLarge} />
+              <View style={styles.carouselIconCircle}>
+                <Ionicons name={item.icon as any} size={28} color={item.color} />
+              </View>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 
   const renderFeaturedBook = ({ item }: { item: any }) => (
     <TouchableOpacity
-      style={[styles.featuredBookCard, { backgroundColor: colors.background }]}
+      style={[styles.featuredBookCard, { backgroundColor: colors.surface }]}
       onPress={() => router.push(`/book/${item.id}`)}
     >
       <View style={styles.featuredImageContainer}>
@@ -168,7 +219,7 @@ export default function HomeScreen() {
       <View style={styles.featuredInfo}>
         <Text style={[styles.featuredTitle, textPrimaryStyle]} numberOfLines={2}>{item.title}</Text>
         <Text style={[styles.featuredPrice, { color: colors.primary }]}>
-          {item.type === 'sell' || item.type === 'rent' ? `﷼ ${item.price}` : 'FREE'}
+          {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -190,7 +241,7 @@ export default function HomeScreen() {
           <SearchBar />
         </View>
 
-        {/* Carousel */}
+        {/* Carousel Redesign */}
         <View style={styles.carouselContainer}>
           <FlatList
             ref={carouselRef}
@@ -206,8 +257,8 @@ export default function HomeScreen() {
             )}
             scrollEventThrottle={16}
             getItemLayout={(data, index) => ({
-              length: width - 40,
-              offset: (width - 40) * index,
+              length: width,
+              offset: width * index,
               index,
             })}
           />
@@ -318,38 +369,35 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* How It Works */}
-        <View style={[styles.howItWorks, { backgroundColor: colors.primary + '08' }]}>
-          <Text style={[styles.howItWorksTitle, textPrimaryStyle]}>How ReBookz Works</Text>
-          <View style={styles.stepsContainer}>
-            <View style={styles.step}>
-              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.stepNumberText, { color: colors.background }]}>1</Text>
-              </View>
-              <Text style={[styles.stepTitle, textPrimaryStyle]}>Browse Books</Text>
-              <Text style={[styles.stepDescription, textSecondaryStyle]}>
-                Search for books by category or use location to find nearby books
-              </Text>
-            </View>
-            <View style={styles.step}>
-              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.stepNumberText, { color: colors.background }]}>2</Text>
-              </View>
-              <Text style={[styles.stepTitle, textPrimaryStyle]}>Contact Seller</Text>
-              <Text style={[styles.stepDescription, textSecondaryStyle]}>
-                Message directly via WhatsApp or call to discuss details
-              </Text>
-            </View>
-            <View style={styles.step}>
-              <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.stepNumberText, { color: colors.background }]}>3</Text>
-              </View>
-              <Text style={[styles.stepTitle, textPrimaryStyle]}>Meet & Exchange</Text>
-              <Text style={[styles.stepDescription, textSecondaryStyle]}>
-                Meet in a safe public place to complete the exchange
-              </Text>
-            </View>
+        {/* How It Works Redesign */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, textPrimaryStyle]}>How ReBookz Works</Text>
           </View>
+          <FlatList
+            data={howItWorksSteps}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.howItWorksList}
+            snapToInterval={width * 0.8 + 16}
+            decelerationRate="fast"
+            renderItem={({ item }) => (
+              <View style={[styles.infographicCard, surfaceStyle]}>
+                <View style={[styles.infographicIconContainer, { backgroundColor: item.color + '15' }]}>
+                  <Ionicons name={item.icon as any} size={32} color={item.color} />
+                  <View style={[styles.stepBadge, { backgroundColor: item.color }]}>
+                    <Text style={styles.stepBadgeText}>{item.id}</Text>
+                  </View>
+                </View>
+                <Text style={[styles.infographicTitle, textPrimaryStyle]}>{item.title}</Text>
+                <Text style={[styles.infographicDescription, textSecondaryStyle]}>
+                  {item.description}
+                </Text>
+                <View style={[styles.infographicLine, { backgroundColor: item.color }]} />
+              </View>
+            )}
+          />
         </View>
 
         {/* CTA */}
@@ -421,40 +469,93 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   carouselContainer: {
-    marginHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
-    height: 100,
+    height: 200, // Increased to accommodate shadows and indicators
   },
   carouselItem: {
-    width: width - Spacing.md * 2,
+    width: width, // Full width for easier paging
+    paddingHorizontal: Spacing.md,
+    height: 180,
+  },
+  carouselCard: {
+    flex: 1,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  carouselCardInner: {
+    flex: 1,
+    borderRadius: 24,
+    padding: Spacing.lg,
+    overflow: 'hidden',
+  },
+  carouselContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: Spacing.md,
-    marginRight: Spacing.md,
+    justifyContent: 'space-between',
   },
-  carouselIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  carouselTextContainer: {
+    flex: 1,
+    zIndex: 1,
+  },
+  carouselTitlePremium: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  carouselSubtitlePremium: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 20,
+    marginBottom: 16,
+    fontWeight: '500',
+    maxWidth: '90%',
+  },
+  carouselCtaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  carouselCtaText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  carouselIconContainerLarge: {
+    width: 100,
+    height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: Spacing.md,
+    position: 'relative',
   },
-  carouselText: {
-    flex: 1,
+  bgIconLarge: {
+    position: 'absolute',
+    right: -20,
+    top: -10,
   },
-  carouselTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  carouselSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 18,
+  carouselIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
   },
   indicators: {
     flexDirection: 'row',
@@ -463,15 +564,15 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.border,
-    marginHorizontal: 4,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.1)', // Subtle base
+    marginHorizontal: 3,
+    width: 6,
   },
   activeIndicator: {
-    backgroundColor: Colors.primary,
     width: 20,
+    backgroundColor: Colors.primary,
   },
   section: {
     marginBottom: Spacing.lg,
@@ -588,56 +689,68 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     textAlign: 'center',
   },
-  howItWorks: {
+  howItWorksList: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  infographicCard: {
+    width: width * 0.8,
+    marginRight: 16,
     padding: Spacing.lg,
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.md,
-    backgroundColor: Colors.primary + '08',
-    borderRadius: 16,
+    borderRadius: 24,
+    backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 10, // Added to prevent bottom clipping of shadow
+    position: 'relative',
   },
-  howItWorksTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  stepsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-  },
-  step: {
-    width: '30%',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  stepNumber: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.primary,
+  infographicIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    position: 'relative',
   },
-  stepNumberText: {
-    color: Colors.background,
-    fontSize: 16,
+  stepBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  stepBadgeText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: 'bold',
   },
-  stepTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-    textAlign: 'center',
+  infographicTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: Spacing.sm,
   },
-  stepDescription: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
+  infographicDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infographicLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    opacity: 0.5,
   },
   ctaContainer: {
     alignItems: 'center',

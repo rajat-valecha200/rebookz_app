@@ -6,6 +6,12 @@ import { AuthProvider } from '../context/AuthContext';
 import { LocationProvider } from '../context/LocationContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext'; // Import ThemeProvider
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { View } from 'react-native';
+
+// Prevent auto hide
+SplashScreen.preventAutoHideAsync();
 
 // Create a component to separate Theme logic
 const AppLayout = () => {
@@ -73,6 +79,10 @@ const AppLayout = () => {
 };
 
 export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

@@ -20,11 +20,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { useLocation } from '../context/LocationContext';
+import { useTheme } from '../context/ThemeContext';
 import debounce from 'lodash/debounce';
 
 export default function MapPickerScreen() {
   const params = useLocalSearchParams();
   const { updateLocation } = useLocation();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
 
@@ -187,20 +189,24 @@ export default function MapPickerScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <View style={[styles.header, {
+          paddingTop: insets.top + 10,
+          backgroundColor: colors.background,
+          borderBottomColor: colors.border
+        }]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Select Location</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Select Location</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -210,36 +216,36 @@ export default function MapPickerScreen() {
 
           {/* Map Center Indicator (Always visible) */}
           <View style={styles.mapCenterIndicator}>
-            <Ionicons name="location" size={24} color={Colors.primary} />
+            <Ionicons name="location" size={24} color={colors.primary} />
           </View>
 
           {/* Loading Indicator for Map Movement */}
           {isMapMoving && (
-            <View style={styles.mapLoadingIndicator}>
-              <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.mapLoadingText}>Updating location...</Text>
+            <View style={[styles.mapLoadingIndicator, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.mapLoadingText, { color: colors.textPrimary }]}>Updating location...</Text>
             </View>
           )}
 
           {/* Current Location Button */}
           <TouchableOpacity
-            style={styles.currentLocationButton}
+            style={[styles.currentLocationButton, { backgroundColor: colors.surface }]}
             onPress={handleUseCurrentLocation}
           >
-            <Ionicons name="locate" size={24} color={Colors.primary} />
+            <Ionicons name="locate" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Selected Location Info */}
-        <View style={styles.locationInfo}>
+        <View style={[styles.locationInfo, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
           <View style={styles.locationHeader}>
-            <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-            <Text style={styles.locationTitle}>Selected Location</Text>
+            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+            <Text style={[styles.locationTitle, { color: colors.textPrimary }]}>Selected Location</Text>
           </View>
-          <Text style={styles.locationAddress} numberOfLines={2}>
+          <Text style={[styles.locationAddress, { color: colors.textPrimary }]} numberOfLines={2}>
             {selectedLocation?.address || 'Moving map to select location...'}
           </Text>
-          <Text style={styles.locationCoordinates}>
+          <Text style={[styles.locationCoordinates, { color: colors.textSecondary }]}>
             {selectedLocation
               ? `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`
               : 'Move map to select location'
@@ -248,12 +254,16 @@ export default function MapPickerScreen() {
         </View>
 
         {/* Action Buttons */}
-        <View style={[styles.actionButtons, { paddingBottom: insets.bottom + 10 }]}>
+        <View style={[styles.actionButtons, {
+          paddingBottom: insets.bottom + 10,
+          backgroundColor: colors.background,
+          borderTopColor: colors.border
+        }]}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
+            style={[styles.actionButton, styles.cancelButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.back()}
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.confirmButton, (!selectedLocation || isMapMoving) && styles.confirmButtonDisabled]}

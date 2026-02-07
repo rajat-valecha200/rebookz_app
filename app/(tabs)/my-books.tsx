@@ -16,10 +16,12 @@ import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { bookService } from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { Book } from '../../types/Book';
 
 export default function MyBooksScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [books, setBooks] = useState<Book[]>([]);
   const [activeTab, setActiveTab] = useState<'active' | 'sold'>('active');
   const [activeCount, setActiveCount] = useState(0);
@@ -105,36 +107,36 @@ export default function MyBooksScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <Header />
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Please login to view your books</Text>
+          <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>Please login to view your books</Text>
         </View>
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header />
 
       <View style={styles.content}>
         {/* Tabs */}
-        <View style={styles.tabs}>
+        <View style={[styles.tabs, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+            style={[styles.tab, activeTab === 'active' && { backgroundColor: colors.primary }]}
             onPress={() => setActiveTab('active')}
           >
-            <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
+            <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'active' && { color: colors.background, fontWeight: '600' }]}>
               Active ({activeCount})
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'sold' && styles.activeTab]}
+            style={[styles.tab, activeTab === 'sold' && { backgroundColor: colors.primary }]}
             onPress={() => setActiveTab('sold')}
           >
-            <Text style={[styles.tabText, activeTab === 'sold' && styles.activeTabText]}>
+            <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'sold' && { color: colors.background, fontWeight: '600' }]}>
               Sold ({soldCount})
             </Text>
           </TouchableOpacity>
@@ -154,14 +156,14 @@ export default function MyBooksScreen() {
             <Ionicons
               name={activeTab === 'active' ? "book-outline" : "checkmark-circle"}
               size={64}
-              color={Colors.textSecondary}
+              color={colors.textSecondary}
             />
-            <Text style={styles.emptyStateText}>
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
               {activeTab === 'active'
                 ? 'No active books'
                 : 'No sold books'}
             </Text>
-            <Text style={styles.emptyStateSubtext}>
+            <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
               {activeTab === 'active'
                 ? 'Add your first book to start selling'
                 : 'Books you sell will appear here'}
@@ -169,11 +171,11 @@ export default function MyBooksScreen() {
 
             {activeTab === 'active' && (
               <TouchableOpacity
-                style={styles.addButton}
+                style={[styles.addButton, { backgroundColor: colors.primary }]}
                 onPress={() => router.push('/add-book')}
               >
-                <Ionicons name="add" size={20} color={Colors.background} />
-                <Text style={styles.addButtonText}>Add First Book</Text>
+                <Ionicons name="add" size={20} color={colors.background} />
+                <Text style={[styles.addButtonText, { color: colors.background }]}>Add First Book</Text>
               </TouchableOpacity>
             )}
           </View>

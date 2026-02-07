@@ -9,16 +9,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-// import Header from '../components/Header';
+import Header from '../components/Header';
 import BookCard from '../components/BookCard';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Book } from '../types/Book';
 
 export default function FavouritesScreen() {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [favorites, setFavorites] = useState<Book[]>([]);
 
   useFocusEffect(
@@ -38,16 +40,16 @@ export default function FavouritesScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* <Header /> */}
         <View style={styles.notLoggedIn}>
-          <Ionicons name="heart-dislike" size={64} color={Colors.textSecondary} />
-          <Text style={styles.notLoggedInText}>Please login to view favorites</Text>
+          <Ionicons name="heart-dislike" size={64} color={colors.textSecondary} />
+          <Text style={[styles.notLoggedInText, { color: colors.textSecondary }]}>Please login to view favorites</Text>
           <TouchableOpacity
-            style={styles.loginButton}
+            style={[styles.loginButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/account')}
           >
-            <Text style={styles.loginButtonText}>Go to Login</Text>
+            <Text style={[styles.loginButtonText, { color: colors.background }]}>Go to Login</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -55,44 +57,39 @@ export default function FavouritesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* <Header /> */}
-
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>My Favorites</Text>
-          <Text style={styles.subtitle}>
-            {favorites.length} {favorites.length === 1 ? 'book' : 'books'} saved
-          </Text>
-        </View>
-
-        {favorites.length > 0 ? (
-          <FlatList
-            data={favorites}
-            renderItem={({ item }) => (
-              <BookCard book={item} />
-            )}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="heart-outline" size={64} color={Colors.textSecondary} />
-            <Text style={styles.emptyStateText}>No favorites yet</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Tap the heart icon on any book to add it here
-            </Text>
-            <TouchableOpacity
-              style={styles.browseButton}
-              onPress={() => router.push('/(tabs)/home')}
-            >
-              <Text style={styles.browseButtonText}>Browse Books</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+    <View style={styles.content}>
+      <View style={styles.statsHeader}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {favorites.length} {favorites.length === 1 ? 'book' : 'books'} saved
+        </Text>
       </View>
-    </SafeAreaView>
+
+      {favorites.length > 0 ? (
+        <FlatList
+          data={favorites}
+          renderItem={({ item }) => (
+            <BookCard book={item} />
+          )}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Ionicons name="heart-outline" size={64} color={colors.textSecondary} />
+          <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No favorites yet</Text>
+          <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
+            Tap the heart icon on any book to add it here
+          </Text>
+          <TouchableOpacity
+            style={[styles.browseButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/(tabs)/home')}
+          >
+            <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse Books</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -127,9 +124,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  header: {
-    padding: Spacing.md,
-    backgroundColor: Colors.surface,
+  statsHeader: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   title: {
     fontSize: 24,
@@ -139,10 +136,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    // marginTop: Spacing.xs,
   },
   listContent: {
-    padding: Spacing.md,
+    // padding: Spacing.md,
   },
   emptyState: {
     flex: 1,

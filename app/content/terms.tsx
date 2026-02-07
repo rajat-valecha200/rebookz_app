@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -25,29 +26,31 @@ const termsData = [
     }
 ];
 
-const TermSection = ({ title, content }: { title: string, content: string }) => (
-    <View style={styles.termContainer}>
-        <Text style={styles.termTitle}>{title}</Text>
-        <Text style={styles.termContent}>{content}</Text>
+const TermSection = ({ title, content, colors }: { title: string, content: string, colors: any }) => (
+    <View style={[styles.termContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[styles.termTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.termContent, { color: colors.textSecondary }]}>{content}</Text>
     </View>
 );
 
 export default function TermsScreen() {
+    const { colors } = useTheme();
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Terms & Conditions</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Terms & Conditions</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <Text style={styles.introText}>
+                <Text style={[styles.introText, { color: colors.textSecondary }]}>
                     Welcome to ReBookz! These terms and conditions outline the rules and regulations for the use of ReBookz's Application.
                 </Text>
                 {termsData.map((term, index) => (
-                    <TermSection key={index} title={term.title} content={term.content} />
+                    <TermSection key={index} title={term.title} content={term.content} colors={colors} />
                 ))}
             </ScrollView>
         </SafeAreaView>

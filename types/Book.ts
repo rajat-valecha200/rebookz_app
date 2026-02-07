@@ -20,6 +20,9 @@ export interface Book {
   isAvailable: boolean;
   status: 'available' | 'reserved' | 'sold';
   distance: number;
+  school?: string;
+  board?: string;
+  classLevel?: string;
   createdAt: string;
 }
 

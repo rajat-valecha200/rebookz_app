@@ -19,11 +19,13 @@ import { categoryService } from '../services/categoryService';
 import { Book } from '../types/Book';
 import { Category } from '../types/Category';
 
+import { useTheme } from '../context/ThemeContext';
 import { useLocation } from '../context/LocationContext';
 
 export default function CategoryBooksScreen() {
   const params = useLocalSearchParams();
   const { location } = useLocation();
+  const { colors } = useTheme();
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
@@ -122,20 +124,20 @@ export default function CategoryBooksScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Custom Header with Back Button */}
-      <View style={styles.headerBar}>
+      <View style={[styles.headerBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{getTitle()}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{getTitle()}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.content}>
         {/* Filter Bar (Only if books exist) */}
         {books.length > 0 && subcategories.length === 0 && (
-          <View style={styles.filterContainer}>
+          <View style={[styles.filterContainer, { backgroundColor: colors.background }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
               {filterOptions.map((opt) => (
                 <TouchableOpacity
