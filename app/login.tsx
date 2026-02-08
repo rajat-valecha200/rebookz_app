@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,11 +87,11 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.iconContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={[styles.logoText, { fontSize: 32 }]}>
-                Re<Text style={styles.logoOrange}>Bookz</Text>
-              </Text>
-            </View>
+            <Image
+              source={require('../assets/images/logo-vertical.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <Text style={styles.subtitle}>
@@ -255,21 +256,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.background,
-  },
-  logoOrange: {
-    color: Colors.accent,
+  logoImage: {
+    width: 200,
+    height: 150,
   },
   subtitle: {
     fontSize: 16,

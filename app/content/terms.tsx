@@ -9,20 +9,44 @@ import { Spacing } from '../../constants/spacing';
 
 const termsData = [
     {
-        title: '1. Acceptance of Terms',
-        content: 'By accessing this app we assume you accept these terms and conditions. Do not continue to use ReBookz if you do not agree to all of the terms and conditions stated on this page.'
+        title: '1. Marketplace Role',
+        content: 'ReBookz is a technology platform that operates solely as an online marketplace enabling users to list, buy, sell, or donate used books. ReBookz does not act as a buyer, seller, donor, recipient, agent, broker, or representative in any transaction conducted through the App.'
     },
     {
-        title: '2. User Accounts',
-        content: 'To access certain features of the app, you may be required to create an account. You agree to provide accurate, current, and complete information during the registration process.'
+        title: '2. Transactions & Communications',
+        content: 'ReBookz is not a party to any transaction or agreement between users. All transactions, communications, payments, delivery arrangements, pickups, and handovers are conducted directly between users and at their sole risk.'
     },
     {
-        title: '3. Buying and Selling',
-        content: 'ReBookz acts as a marketplace. We are not a party to any transaction between buyers and sellers. We do not control the quality, safety, or legality of the items advertised.'
+        title: '3. Listings & Items',
+        content: 'ReBookz does not own, possess, inspect, store, package, ship, verify, or deliver any items listed on the App and makes no representations or warranties regarding the quality, condition, safety, authenticity, legality, or accuracy of any listings or user-provided information.'
     },
     {
-        title: '4. Content Liability',
-        content: 'We shall not be hold responsible for any content that appears on your listing. You agree to protect and defend us against all claims that is rising on your listing.'
+        title: '4. User Verification & Risks',
+        content: 'ReBookz does not verify the identity, credibility, or conduct of users and does not guarantee that transactions will be completed. Users acknowledge that the use of an open marketplace involves inherent risks, including fraud, misrepresentation, non-delivery, or disputes.'
+    },
+    {
+        title: '5. User Responsibilities',
+        content: 'Users are solely responsible for: Verifying the identity and reliability of other users, Inspecting items prior to completing a transaction, Protecting their personal and financial information, and Complying with applicable laws and regulations.'
+    },
+    {
+        title: '6. Limitation of Liability',
+        content: 'ReBookz shall not be liable for any loss, damage, injury, delay, dispute, fraud, misrepresentation, counterfeit items, non-delivery, payment failure, or claim arising from or related to standard interactions, use/misuse of items, or failure to perform transactions.'
+    },
+    {
+        title: '7. Disputes',
+        content: 'All disputes arising from or relating to transactions conducted through the App shall be resolved exclusively between the users involved. ReBookz has no obligation to mediate disputes or enforce agreements between users.'
+    },
+    {
+        title: '8. Indemnification',
+        content: 'Users agree to release, indemnify, and hold harmless ReBookz, its owners, directors, officers, employees, and affiliates from any and all claims, liabilities, damages, losses, or expenses arising out of user transactions or misconduct.'
+    },
+    {
+        title: '9. Account Security',
+        content: 'ReBookz reserves the right, but assumes no obligation, to suspend, restrict, or terminate user accounts that are suspected of fraudulent, abusive, or unlawful activity.'
+    },
+    {
+        title: '10. Governing Law',
+        content: 'These Terms and any disputes arising from or in connection with the App shall be governed by and construed in accordance with the laws of the Kingdom of Saudi Arabia.'
     }
 ];
 

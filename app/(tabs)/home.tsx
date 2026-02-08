@@ -708,6 +708,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     marginBottom: 10, // Added to prevent bottom clipping of shadow
     position: 'relative',
+    overflow: 'hidden',
   },
   infographicIconContainer: {
     width: 60,

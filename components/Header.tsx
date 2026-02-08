@@ -1,5 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, FlatList,
+  Image,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
@@ -78,59 +81,58 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
           onPress={() => router.replace('/(tabs)/home')}
           style={styles.logoContainer}
         >
-          <Text style={styles.appName}>
-            Re<Text style={styles.appNameOrange}>Bookz</Text>
-          </Text>
+          <Image
+            source={require('../assets/images/logo-horizontal.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
         <View style={styles.actionsContainer}>
-          {/* Theme Toggle Button */}
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
-            onPress={toggleTheme}
-          >
-            <Ionicons
-              name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
-              size={20}
-              color={colors.textPrimary}
-            />
-          </TouchableOpacity>
+          <View style={styles.actionButtonsContainer}>
+            {/* Theme Toggle Button */}
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
+              onPress={toggleTheme}
+            >
+              <Ionicons
+                name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+                size={20}
+                color={colors.textPrimary}
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
-            onPress={() => isAuthenticated ? router.push('/favourites') : router.push('/login')}
-          >
-            <Ionicons name="heart-outline" size={22} color={colors.textPrimary} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: headerActionBg, borderColor: colors.border }]}
+              onPress={() => isAuthenticated ? router.push('/favourites') : router.push('/login')}
+            >
+              <Ionicons name="heart-outline" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
 
+            <TouchableOpacity
+              style={[styles.profileButton, isAuthenticated && styles.profileButtonActive, { backgroundColor: headerActionBg, borderColor: colors.border }]}
+              onPress={() => isAuthenticated ? router.push('/account') : router.push('/login')}
+            >
+              {isAuthenticated ? (
+                <Text style={[styles.profileInitials, { color: colors.textPrimary }]}>
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </Text>
+              ) : (
+                <Ionicons name="person-outline" size={20} color={colors.textPrimary} />
+              )}
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
-            style={[styles.profileButton, isAuthenticated && styles.profileButtonActive, { backgroundColor: headerActionBg, borderColor: colors.border }]}
-            onPress={() => isAuthenticated ? router.push('/account') : router.push('/login')}
+            style={[styles.locationButton, { backgroundColor: headerActionBg }]}
+            onPress={handleLocationPress}
           >
-            {isAuthenticated ? (
-              <Text style={[styles.profileInitials, { color: colors.textPrimary }]}>
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
-            ) : (
-              <Ionicons name="person-outline" size={20} color={colors.textPrimary} />
-            )}
+            <Ionicons name="location-sharp" size={16} color={colors.primary} />
+            <Text style={[styles.locationText, textPrimaryStyle]} numberOfLines={1}>
+              {getLocationText()}
+            </Text>
+            <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Row 2: Location & Tagline */}
-      <View style={styles.bottomRow}>
-        <Text style={[styles.tagline, textSecondaryStyle]}>Buy • Sell • Donate</Text>
-        <TouchableOpacity
-          style={[styles.locationButton, { backgroundColor: headerActionBg }]}
-          onPress={handleLocationPress}
-        >
-          <Ionicons name="location-sharp" size={16} color={colors.primary} />
-          <Text style={[styles.locationText, textPrimaryStyle]} numberOfLines={1}>
-            {getLocationText()}
-          </Text>
-          <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -155,20 +157,22 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40,
   },
-  appName: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: Colors.primary,
-    letterSpacing: 0.5,
-  },
-  appNameOrange: {
-    color: Colors.accent,
+  logoImage: {
+    width: 180,
+    height: 48,
   },
   actionsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: Spacing.lg,
+  },
+  actionButtonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs || 8,
+    flex: 1,
   },
   actionButton: {
     width: 36,
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 12,
-    maxWidth: '65%',
+    maxWidth: 120,
     gap: 4,
   },
   locationText: {

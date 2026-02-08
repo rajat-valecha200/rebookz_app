@@ -4,7 +4,7 @@
     "slug": "rebookz-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/reBookz_bg_v1.jpg",
+    "icon": "./assets/images/logo-vertical.png",
     "scheme": "rebookzapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -31,7 +31,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/reBookz_bg_v1.jpg"
+      "favicon": "./assets/images/logo-vertical.png"
     },
     "plugins": [
       "expo-router",

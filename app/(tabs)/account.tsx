@@ -169,6 +169,11 @@ export default function AccountScreen() {
       label: 'Terms & Conditions',
       onPress: () => router.push('/content/terms')
     },
+    {
+      icon: 'shield-checkmark-outline',
+      label: 'Privacy Policy',
+      onPress: () => router.push('/content/privacy')
+    },
     { icon: 'help-circle', label: 'Help & Support', onPress: () => router.push('/content/help') },
     { icon: 'chatbox-ellipses-outline', label: 'Contact Support', onPress: () => router.push('/contact-support') },
   ];

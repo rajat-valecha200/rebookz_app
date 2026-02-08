@@ -192,7 +192,7 @@ export default function CategoriesScreen() {
 
         {/* Right: Sub Categories with Dropdowns */}
         <View style={[styles.subCategoriesContainer, { backgroundColor: colors.background }]}>
-          {selectedMain && selectedMain.hasChildren && subCategories.length > 0 ? (
+          {selectedMain ? (
             <FlatList
               data={subCategories}
               renderItem={renderSubCategory}
@@ -200,44 +200,47 @@ export default function CategoriesScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.subCategoriesList}
               ListHeaderComponent={
-                <View>
-                  <Text style={[styles.mainCategoryTitle, { color: colors.textPrimary }]}>{selectedMain.name}</Text>
+                <View style={styles.subHeader}>
+                  <View style={styles.titleRow}>
+                    <Text style={[styles.mainCategoryTitle, { color: colors.textPrimary }]}>{selectedMain.name}</Text>
+                    <TouchableOpacity
+                      style={[styles.smallBrowseButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}
+                      onPress={() => router.push({
+                        pathname: '/category-books',
+                        params: { category: selectedMain.name }
+                      })}
+                    >
+                      <Ionicons name="search" size={14} color={colors.primary} />
+                      <Text style={[styles.smallBrowseButtonText, { color: colors.primary }]}>Browse Books</Text>
+                    </TouchableOpacity>
+                  </View>
                   <Text style={[styles.mainCategoryDescription, { color: colors.textSecondary }]}>{selectedMain.description}</Text>
+
+                  {subCategories.length > 0 && (
+                    <Text style={[styles.subLabelsHeader, { color: colors.textSecondary }]}>Subcategories</Text>
+                  )}
                 </View>
               }
               ListEmptyComponent={
-                <View style={styles.noSubCategories}>
-                  <Ionicons name="grid-outline" size={48} color={colors.textSecondary} />
-                  <Text style={[styles.noSubText, { color: colors.textSecondary }]}>No subcategories</Text>
-                  <TouchableOpacity
-                    style={[styles.browseButton, { backgroundColor: colors.primary }]}
-                    onPress={() => router.push({
-                      pathname: '/category-books',
-                      params: { category: selectedMain.name }
-                    })}
-                  >
-                    <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse {selectedMain.name}</Text>
-                  </TouchableOpacity>
-                </View>
+                !selectedMain.hasChildren || subCategories.length === 0 ? (
+                  <View style={styles.noSubCategories}>
+                    <Ionicons name="book-outline" size={48} color={colors.textSecondary} />
+                    <Text style={[styles.noSubText, { color: colors.textSecondary }]}>
+                      Search directly in {selectedMain.name}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.browseButton, { backgroundColor: colors.primary }]}
+                      onPress={() => router.push({
+                        pathname: '/category-books',
+                        params: { category: selectedMain.name }
+                      })}
+                    >
+                      <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse All Books</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null
               }
             />
-          ) : selectedMain && !selectedMain.hasChildren ? (
-            <View style={styles.noChildrenContainer}>
-              <Ionicons name="book" size={64} color={colors.textSecondary} />
-              <Text style={[styles.noChildrenText, { color: colors.textSecondary }]}>{selectedMain.name}</Text>
-              <Text style={[styles.noChildrenDescription, { color: colors.textSecondary }]}>
-                This category doesn't have subcategories
-              </Text>
-              <TouchableOpacity
-                style={[styles.browseButton, { backgroundColor: colors.primary }]}
-                onPress={() => router.push({
-                  pathname: '/category-books',
-                  params: { category: selectedMain.name }
-                })}
-              >
-                <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse {selectedMain.name}</Text>
-              </TouchableOpacity>
-            </View>
           ) : (
             <View style={styles.selectPrompt}>
               <Ionicons name="grid-outline" size={64} color={colors.textSecondary} />
@@ -312,16 +315,46 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     backgroundColor: Colors.background,
   },
+  subHeader: {
+    marginBottom: Spacing.md,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  smallBrowseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  smallBrowseButtonText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  subLabelsHeader: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    opacity: 0.6,
+  },
   mainCategoryTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
   },
   mainCategoryDescription: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   subCategoriesList: {
     paddingBottom: Spacing.xl,
@@ -389,9 +422,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
-    marginTop: 50, // Added margin to center better in list
+    marginTop: 50,
   },
   noSubText: {
+    textAlign: 'center',
     fontSize: 16,
     color: Colors.textSecondary,
     marginTop: Spacing.md,

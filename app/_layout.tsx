@@ -19,7 +19,12 @@ const AppLayout = () => {
 
   return (
     <>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.background} />
+      <StatusBar
+        key={`status-bar-${theme}`}
+        style={theme === 'dark' ? 'light' : 'dark'}
+        backgroundColor="transparent"
+        translucent={true}
+      />
       <Stack screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
