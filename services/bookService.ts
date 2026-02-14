@@ -1,9 +1,10 @@
 import { Book } from '../types/Book';
 import api, { SERVER_URL } from './api';
 import { storageService } from './storageService';
+import { calculateDistance } from '../utils/distance';
 
 // Helper to map Backend Book to Frontend Book
-const mapBook = (book: any): Book => {
+const mapBook = (book: any, userLat?: number, userLng?: number): Book => {
   let lat = 0;
   let lng = 0;
   let address = '';
@@ -19,6 +20,12 @@ const mapBook = (book: any): Book => {
       lat = book.location.lat || 0;
       lng = book.location.lng || 0;
     }
+  }
+
+  let distance = book.distance || 0;
+  // Fallback: If backend distance is 0 but we have coordinates, calculate it client-side
+  if (distance === 0 && userLat !== undefined && userLng !== undefined && lat !== 0 && lng !== 0) {
+    distance = calculateDistance(userLat, userLng, lat, lng);
   }
 
   return {
@@ -40,7 +47,7 @@ const mapBook = (book: any): Book => {
     location: { address, lat, lng },
     isAvailable: book.isAvailable,
     status: book.status || 'available',
-    distance: book.distance || 0,
+    distance,
     school: book.school || '',
     board: book.board || '',
     classLevel: book.classLevel || '',
@@ -50,10 +57,10 @@ const mapBook = (book: any): Book => {
 
 export const bookService = {
   // Get all books
-  getAllBooks: async (): Promise<Book[]> => {
+  getAllBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
     try {
-      const { data } = await api.get('/books');
-      const books = data.books ? data.books.map(mapBook) : [];
+      const { data }: any = await api.get('/books');
+      const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       console.error('Error fetching books', error);
@@ -67,10 +74,9 @@ export const bookService = {
       const params = new URLSearchParams();
       if (userLat) params.append('lat', userLat.toString());
       if (userLng) params.append('lng', userLng.toString());
-      // params.append('radius', '50000'); // Optional
 
-      const { data } = await api.get(`/mobile/books?${params.toString()}`);
-      const books = data.books ? data.books.map(mapBook) : [];
+      const { data } = await api.get<{ books: any[] }>(`/mobile/books?${params.toString()}`);
+      const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       console.error('Error fetching nearby books', error);
@@ -79,10 +85,10 @@ export const bookService = {
   },
 
   // Get books by category
-  getBooksByCategory: async (category: string): Promise<Book[]> => {
+  getBooksByCategory: async (category: string, userLat?: number, userLng?: number): Promise<Book[]> => {
     try {
-      const { data } = await api.get(`/books?category=${category}`);
-      const books = data.books ? data.books.map(mapBook) : [];
+      const { data } = await api.get<{ books: any[] }>(`/books?category=${category}`);
+      const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       return [];
@@ -90,20 +96,20 @@ export const bookService = {
   },
 
   // Get book by ID
-  getBookById: async (id: string): Promise<Book | undefined> => {
+  getBookById: async (id: string, userLat?: number, userLng?: number): Promise<Book | undefined> => {
     try {
-      const { data } = await api.get(`/books/${id}`);
-      return mapBook(data);
+      const { data } = await api.get<any>(`/books/${id}`);
+      return mapBook(data, userLat, userLng);
     } catch (error) {
       return undefined;
     }
   },
 
   // Search books
-  searchBooks: async (query: string): Promise<Book[]> => {
+  searchBooks: async (query: string, userLat?: number, userLng?: number): Promise<Book[]> => {
     try {
-      const { data } = await api.get(`/books?keyword=${query}`);
-      const books = data.books ? data.books.map(mapBook) : [];
+      const { data } = await api.get<{ books: any[] }>(`/books?keyword=${query}`);
+      const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
       return [];
@@ -113,8 +119,8 @@ export const bookService = {
   // Get user's books
   getUserBooks: async (userId: string): Promise<Book[]> => {
     try {
-      const { data } = await api.get('/books'); // Need seller filter in API
-      return data.books ? data.books.map(mapBook).filter((b: Book) => b.sellerId === userId) : [];
+      const { data } = await api.get<{ books: any[] }>('/books');
+      return data.books ? data.books.map((b: any) => mapBook(b)).filter((b: Book) => b.sellerId === userId) : [];
     } catch (error) {
       return [];
     }
@@ -122,13 +128,13 @@ export const bookService = {
 
   // Add new book
   addBook: async (book: any): Promise<Book> => {
-    const { data } = await api.post('/books', book);
+    const { data } = await api.post<any>('/books', book);
     return mapBook(data);
   },
 
   // Update book
   updateBook: async (id: string, updates: Partial<Book>): Promise<Book | null> => {
-    const { data } = await api.put(`/books/${id}`, updates);
+    const { data } = await api.put<any>(`/books/${id}`, updates);
     return mapBook(data);
   },
 
@@ -145,8 +151,7 @@ export const bookService = {
   // Toggle favorite (Backend)
   toggleFavorite: async (userId: string, bookId: string): Promise<boolean> => {
     try {
-      const { data } = await api.put(`/users/favorites/${bookId}`);
-      // Optionally update local cache if we want offline support, but for now rely on API
+      const { data } = await api.put<{ isFavorited: boolean }>(`/users/favorites/${bookId}`);
       return data.isFavorited;
     } catch (e) {
       console.error("Toggle Fav Error", e);
@@ -154,37 +159,16 @@ export const bookService = {
     }
   },
 
-  // Check if book is favorited (Backend via User Profile or separate API?)
-  // Ideally we should cache "My Favorites" list on app load/login.
-  // For now, let's fetch user profile or assume we have it in AuthContext?
-  // But service doesn't have access to context.
-  // Let's implement a quick check or fetch.
-  // Better approach: fetch all favorites IDs once and check locally?
-  // Or checking individual book status is expensive.
-  // Let's rely on AuthContext user.favorites if available?
-  // Since we can't access Context here easily without passing it, let's make isBookFavorited tricky.
-  // ACTUALLY: The Best Practice is usually to have "My Favorites" loaded in Redux/Context.
-  // But sticking to service:
   isBookFavorited: async (userId: string, bookId: string): Promise<boolean> => {
-    // Logic: Fetch user's favorites from backend (or assume synced).
-    // Let's just create a `getFavoritesIds` endpoint or use `getUserFavorites`.
     const books = await bookService.getUserFavorites(userId);
     return books.some(b => b.id === bookId);
   },
 
   // Get user's favorite books (Backend)
-  getUserFavorites: async (userId: string): Promise<Book[]> => {
+  getUserFavorites: async (userId: string, userLat?: number, userLng?: number): Promise<Book[]> => {
     try {
-      // We need an endpoint to get favorite books populated.
-      // Current `toggle` only updates IDs.
-      // We can add `GET /api/users/favorites` which returns populated books.
-      // Let's rely on filter for now if backend doesn't support direct fetch?
-      // Wait, current `User` model has refs.
-      // It's better to add `getFavorites` to backend.
-      // Implementing client-side filter for now (fetch all books + filter by ID from user profile) is inefficient.
-      // Let's assume we add `GET /api/users/favorites` next step.
-      const { data } = await api.get(`/users/favorites`);
-      return data.favorites ? data.favorites.map(mapBook) : [];
+      const { data } = await api.get<{ favorites: any[] }>(`/users/favorites`);
+      return data.favorites ? data.favorites.map((b: any) => mapBook(b, userLat, userLng)) : [];
     } catch (error) {
       console.error("Get Favs Error", error);
       return [];
@@ -192,12 +176,65 @@ export const bookService = {
   },
 
   // Get featured books
-  getFeaturedBooks: async (): Promise<Book[]> => {
+  getFeaturedBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
     try {
-      const { data } = await api.get('/books');
-      const books = data.books ? data.books.map(mapBook) : [];
+      const { data }: any = await api.get('/books');
+      const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold').slice(0, 5);
     } catch (e) { return []; }
+  },
+
+  // Record a book view
+  recordView: async (bookId: string): Promise<void> => {
+    try {
+      await api.post(`/mobile/books/${bookId}/view`).catch(() => { });
+
+      const LOCAL_RECENT_KEY = '@recently_viewed';
+      const recentIds = await storageService.getItem(LOCAL_RECENT_KEY) || [];
+      const updatedIds = [bookId, ...recentIds.filter((id: string) => id !== bookId)].slice(0, 10);
+      await storageService.setItem(LOCAL_RECENT_KEY, updatedIds);
+    } catch (e) {
+      console.error("Record view error", e);
+    }
+  },
+
+  // Get recently viewed books
+  getRecentlyViewedBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+    try {
+      const { data } = await api.get<any[]>('/mobile/books/recent');
+      if (data && data.length > 0) {
+        return data.map((b: any) => mapBook(b, userLat, userLng));
+      }
+    } catch (e) {
+      console.log("Backend recent views fetch failed or not authorized, falling back to local");
+    }
+
+    try {
+      const LOCAL_RECENT_KEY = '@recently_viewed';
+      const recentIds = await storageService.getItem(LOCAL_RECENT_KEY) || [];
+      if (recentIds.length === 0) return [];
+
+      const bookPromises = recentIds.map((id: string) => bookService.getBookById(id, userLat, userLng));
+      const books = await Promise.all(bookPromises);
+      return books.filter((b): b is Book => b !== undefined);
+    } catch (e) {
+      console.error("Get recent views error", e);
+      return [];
+    }
+  },
+
+  // Get free books
+  getFreeBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (userLat) params.append('lat', userLat.toString());
+      if (userLng) params.append('lng', userLng.toString());
+      const { data } = await api.get<{ books: any[] }>(`/mobile/books/free?${params.toString()}`);
+      return data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
+    } catch (e) {
+      console.error("Get free books error", e);
+      return [];
+    }
   },
 
   // Upload image
@@ -216,12 +253,12 @@ export const bookService = {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return data.image; // Returns relative path e.g. /uploads/file.jpg
+      return data.image;
     } catch (error) {
       console.error('Error uploading image', error);
       return null;
     }
   },
 
-  initializeBookService: async () => { }, // No-op
+  initializeBookService: async () => { },
 };

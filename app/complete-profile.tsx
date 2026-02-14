@@ -25,6 +25,7 @@ export default function CompleteProfileScreen() {
     const { colors } = useTheme();
     const [name, setName] = useState(user?.name === 'New User' ? '' : (user?.name || '')); // Clear "New User" default
     const [email, setEmail] = useState(user?.email || '');
+    const [phone, setPhone] = useState(user?.phone || '');
     const [age, setAge] = useState(user?.age?.toString() || '');
     const [gender, setGender] = useState(user?.gender || 'Male');
     const [dob, setDob] = useState<Date | undefined>(user?.dob ? new Date(user.dob) : undefined);
@@ -42,6 +43,7 @@ export default function CompleteProfileScreen() {
             await updateProfile({
                 name,
                 email,
+                phone,
                 age: parseInt(age),
                 gender,
                 dob: dob?.toISOString()
@@ -110,7 +112,26 @@ export default function CompleteProfileScreen() {
                         placeholderTextColor={colors.textSecondary}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        editable={!user?.email} // Email often locked if social login or already verified
                     />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
+                    <View style={[styles.phoneInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <View style={[styles.prefix, { borderRightColor: colors.border }]}>
+                            <Text style={{ color: colors.textPrimary }}>+966</Text>
+                        </View>
+                        <TextInput
+                            style={[styles.phoneInput, { color: colors.textPrimary }]}
+                            value={phone}
+                            onChangeText={setPhone}
+                            placeholder="55 123 4567"
+                            placeholderTextColor={colors.textSecondary}
+                            keyboardType="phone-pad"
+                            maxLength={10}
+                        />
+                    </View>
                 </View>
 
                 <View style={styles.row}>
@@ -183,7 +204,7 @@ export default function CompleteProfileScreen() {
                     onPress={handleUpdate}
                     disabled={loading}
                 >
-                    <Text style={[styles.saveText, { color: colors.background }]}>{loading ? 'Saving...' : 'Save Profile'}</Text>
+                    <Text style={[styles.saveText, { color: colors.background }]}>{loading ? 'Saving...' : 'Finish Setup'}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -268,5 +289,25 @@ const styles = StyleSheet.create({
         color: Colors.background,
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    phoneInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: 8,
+        height: 50,
+        overflow: 'hidden',
+    },
+    prefix: {
+        paddingHorizontal: 12,
+        height: '100%',
+        justifyContent: 'center',
+        borderRightWidth: 1,
+        backgroundColor: 'rgba(0,0,0,0.02)',
+    },
+    phoneInput: {
+        flex: 1,
+        paddingHorizontal: 12,
+        fontSize: 16,
     }
 });

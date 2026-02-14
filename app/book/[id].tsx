@@ -16,14 +16,17 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { bookService } from '../../services/bookService';
+import { WEB_URL } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Book } from '../../types/Book';
-
 import { useTheme } from '../../context/ThemeContext';
+import { useLocation } from '../../context/LocationContext';
+import SafeImage from '../../components/SafeImage';
 
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams();
   const { user, isAuthenticated } = useAuth();
+  const { location } = useLocation();
   const { colors } = useTheme(); // Use Theme Colors
   const [book, setBook] = useState<Book | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -32,18 +35,21 @@ export default function BookDetailsScreen() {
   useEffect(() => {
     const loadBookData = async () => {
       if (id) {
-        const bookData = await bookService.getBookById(id as string);
+        const bookData = await bookService.getBookById(id as string, location?.lat, location?.lng);
         if (bookData) {
           setBook(bookData);
-          if (user) {
+          if (isAuthenticated && user) {
             const favorited = await bookService.isBookFavorited(user.id, bookData.id);
             setIsFavorite(favorited);
           }
+
+          // Record view for persistence (Backend & Local)
+          await bookService.recordView(bookData.id);
         }
       }
     }
     loadBookData();
-  }, [id, user]);
+  }, [id, user, isAuthenticated, location]);
 
   const handleCallSeller = () => {
     Linking.openURL(`tel:${book?.sellerPhone}`).catch(err =>
@@ -73,9 +79,10 @@ export default function BookDetailsScreen() {
 
   const handleShare = async () => {
     try {
+      const shareUrl = `${WEB_URL}/book/${book?.id}`;
       await Share.share({
-        message: `Check out this book on ReBookz: ${book?.title} - ${book?.description}`,
-        url: book?.images[0],
+        message: `Check out this book on ReBookz: ${book?.title}\n\nSee details: ${shareUrl}`,
+        url: shareUrl,
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -93,6 +100,8 @@ export default function BookDetailsScreen() {
       ]);
     }
   };
+
+  const placeholderImage = require('../../assets/images/placeholder-book.png');
 
   if (!book) {
     return (
@@ -136,9 +145,10 @@ export default function BookDetailsScreen() {
       >
         {/* Image Section */}
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: book.images[0] || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=500&fit=crop' }}
+          <SafeImage
+            uri={book.images && book.images.length > 0 ? book.images[0] : undefined}
             style={styles.image}
+            resizeMode="cover"
           />
           <TouchableOpacity
             style={styles.favoriteButton}

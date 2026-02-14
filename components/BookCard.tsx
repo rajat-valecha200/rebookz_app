@@ -15,6 +15,7 @@ import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import SafeImage from './SafeImage';
 
 interface BookCardProps {
   book: Book;
@@ -147,6 +148,8 @@ export default function BookCard({
     return book.category.charAt(0).toUpperCase() + book.category.slice(1);
   };
 
+  const placeholderImage = require('../assets/images/placeholder-book.png');
+
   return (
     <TouchableOpacity
       style={[styles.container, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -155,16 +158,11 @@ export default function BookCard({
       <View style={styles.content}>
         {/* Left: Book Image */}
         <View style={styles.imageContainer}>
-          {book.images[0] ? (
-            <Image
-              source={{ uri: book.images[0] }}
-              style={styles.image}
-            />
-          ) : (
-            <View style={[styles.image, styles.placeholderImage, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="book" size={40} color={colors.textSecondary} />
-            </View>
-          )}
+          <SafeImage
+            uri={book.images && book.images[0]}
+            style={styles.image}
+            resizeMode="cover"
+          />
 
           {/* Type Badge */}
           <View style={[styles.typeBadge, { backgroundColor: getTypeColor(book.type) }]}>

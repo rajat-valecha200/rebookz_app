@@ -82,7 +82,7 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
           style={styles.logoContainer}
         >
           <Image
-            source={require('../assets/images/logo-horizontal.png')}
+            source={require('../assets/images/logo-text.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
@@ -157,11 +157,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
+    height: 45,
   },
   logoImage: {
-    width: 180,
-    height: 48,
+    width: 130,
+    height: 45,
+    resizeMode: 'contain',
   },
   actionsContainer: {
     flexDirection: 'column',

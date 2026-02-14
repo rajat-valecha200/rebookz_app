@@ -13,7 +13,7 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
-  }),
+  }) as any, // Bypass or add missing properties
 });
 
 interface User {
@@ -40,6 +40,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   skipLogin: () => void;
   googleLogin: () => Promise<void>;
+  dummyLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user?.id && !!(user as any).token;
 
   useEffect(() => {
     checkLoginStatus();
@@ -105,6 +106,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userInfo = await SecureStore.getItemAsync('userInfo');
       if (userInfo) {
         const parsedUser = JSON.parse(userInfo);
+
+        // Enforce token presence - clear legacy/incorrect sessions
+        if (!parsedUser.token) {
+          console.log("Session missing token, clearing...");
+          await SecureStore.deleteItemAsync('userInfo');
+          setUser(null);
+          return;
+        }
+
         setUser(parsedUser);
 
         // Register for Push Notifications
@@ -217,8 +227,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace('/(tabs)/home');
   };
 
+  const dummyLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await api.post('/users/dummy-login');
+      const userData: any = data;
+      const user = { ...userData, id: userData._id };
+      setUser(user);
+      await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
+      router.replace('/(tabs)/home');
+    } catch (e) {
+      console.error("Dummy login error", e);
+      throw e;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin, googleLogin }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin, googleLogin, dummyLogin }}>
       {children}
     </AuthContext.Provider>
   );

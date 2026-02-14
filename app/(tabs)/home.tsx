@@ -11,6 +11,7 @@ import {
   FlatList,
   Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -18,6 +19,7 @@ import Header from '../../components/Header';
 import BookCard from '../../components/BookCard';
 import CategoryCard from '../../components/CategoryCard';
 import SearchBar from '../../components/SearchBar';
+import SafeImage from '../../components/SafeImage';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { bookService } from '../../services/bookService';
@@ -100,11 +102,22 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [nearbyBooks, setNearbyBooks] = useState<Book[]>([]);
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
+  const [recentlyViewedBooks, setRecentlyViewedBooks] = useState<Book[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isNearbyFallback, setIsNearbyFallback] = useState(false);
   const scrollX = useRef(new Animated.Value(0)).current;
   const carouselRef = useRef<FlatList>(null);
+  const bannerRef = useRef<FlatList>(null);
+  const [bannerIndex, setBannerIndex] = useState(0);
+
+  const bannerImages = [
+    require('../../assets/images/banners/image1.png'),
+    require('../../assets/images/banners/image2.png'),
+    require('../../assets/images/banners/image3.png'),
+  ];
+
+  const placeholderImage = require('../../assets/images/placeholder-book.png');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -114,14 +127,14 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (carouselRef.current) {
-        const nextIndex = carouselIndex < carouselData.length - 1 ? carouselIndex + 1 : 0;
-        setCarouselIndex(nextIndex);
-        carouselRef.current.scrollToIndex({ index: nextIndex, animated: true });
+      if (bannerRef.current) {
+        const nextIndex = bannerIndex < bannerImages.length - 1 ? bannerIndex + 1 : 0;
+        setBannerIndex(nextIndex);
+        bannerRef.current.scrollToIndex({ index: nextIndex, animated: true });
       }
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [carouselIndex]);
+  }, [bannerIndex]);
 
   const loadData = async () => {
     try {
@@ -136,11 +149,15 @@ export default function HomeScreen() {
         setIsNearbyFallback(false);
       }
 
-      const featuredData = await bookService.getFeaturedBooks();
+      const featuredData = await bookService.getFeaturedBooks(location?.lat, location?.lng);
+      setFeaturedBooks(featuredData);
+
+      const recentData = await bookService.getRecentlyViewedBooks(location?.lat, location?.lng);
+
+      setRecentlyViewedBooks(recentData);
 
       setCategories(categoriesData.slice(0, 8));
       setNearbyBooks(nearbyData);
-      setFeaturedBooks(featuredData);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -200,11 +217,11 @@ export default function HomeScreen() {
       <View style={styles.featuredImageContainer}>
         {/* Heart removed as per request */}
         <View style={[styles.featuredImage, surfaceStyle]}>
-          {item.images && item.images.length > 0 ? (
-            <Image source={{ uri: item.images[0] }} style={{ width: '100%', height: '100%', borderRadius: 8 }} resizeMode="cover" />
-          ) : (
-            <Ionicons name="book" size={48} color={colors.textSecondary} />
-          )}
+          <SafeImage
+            uri={item.images && item.images.length > 0 ? item.images[0] : undefined}
+            style={{ width: '100%', height: '100%', borderRadius: 8 }}
+            resizeMode="cover"
+          />
         </View>
         <View style={[styles.featuredBadge, {
           backgroundColor:
@@ -218,9 +235,17 @@ export default function HomeScreen() {
       </View>
       <View style={styles.featuredInfo}>
         <Text style={[styles.featuredTitle, textPrimaryStyle]} numberOfLines={2}>{item.title}</Text>
-        <Text style={[styles.featuredPrice, { color: colors.primary }]}>
-          {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
-        </Text>
+        <View style={styles.featuredBottomRow}>
+          <Text style={[styles.featuredPrice, { color: colors.primary }]}>
+            {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
+          </Text>
+          <View style={styles.distanceBadge}>
+            <Ionicons name="location" size={10} color={colors.textSecondary} />
+            <Text style={[styles.distanceText, textSecondaryStyle]}>
+              {item.distance ? item.distance.toFixed(1) : '0.0'} km
+            </Text>
+          </View>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -241,13 +266,16 @@ export default function HomeScreen() {
           <SearchBar />
         </View>
 
-        {/* Carousel Redesign */}
-        <View style={styles.carouselContainer}>
+        <View style={styles.bannerCarouselContainer}>
           <FlatList
-            ref={carouselRef}
-            data={carouselData}
-            renderItem={renderCarouselItem}
-            keyExtractor={(item) => item.id.toString()}
+            ref={bannerRef}
+            data={bannerImages}
+            renderItem={({ item }) => (
+              <View style={styles.bannerItem}>
+                <Image source={item} style={styles.bannerImage} resizeMode="contain" />
+              </View>
+            )}
+            keyExtractor={(_, index) => index.toString()}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -256,31 +284,7 @@ export default function HomeScreen() {
               { useNativeDriver: false }
             )}
             scrollEventThrottle={16}
-            getItemLayout={(data, index) => ({
-              length: width,
-              offset: width * index,
-              index,
-            })}
           />
-          <View style={styles.indicators}>
-            {carouselData.map((_, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => {
-                  setCarouselIndex(idx);
-                  carouselRef.current?.scrollToIndex({ index: idx, animated: true });
-                }}
-              >
-                <View
-                  style={[
-                    styles.indicator,
-                    { backgroundColor: colors.border },
-                    carouselIndex === idx && { backgroundColor: colors.primary, width: 20 },
-                  ]}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
 
         {/* Categories Section */}
@@ -332,6 +336,35 @@ export default function HomeScreen() {
             />
           </View>
         )}
+
+        {/* Grab Free Books Banner */}
+        <TouchableOpacity
+          style={styles.freeBooksBanner}
+          onPress={() => router.push('/free-books')}
+          activeOpacity={0.9}
+        >
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=1000&auto=format&fit=crop' }}
+            style={styles.freeBooksBannerImage}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={styles.freeBooksBannerOverlay}
+          >
+            <View style={styles.freeBooksBannerContent}>
+              <View style={styles.freeBooksHeaderRow}>
+                <Ionicons name="gift" size={20} color="#FFD700" />
+                <Text style={styles.freeBooksBannerTitle}>Grab Free Books</Text>
+              </View>
+              <Text style={styles.freeBooksBannerSubtitle}>Discover books available for swap or donation</Text>
+            </View>
+            <View style={styles.freeBooksBannerBadge}>
+              <Text style={styles.freeBooksBannerBadgeText}>VIEW ALL</Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
 
         {/* Nearby Books */}
         <View style={styles.section}>
@@ -399,6 +432,50 @@ export default function HomeScreen() {
             )}
           />
         </View>
+
+        {/* Recently Viewed */}
+        {recentlyViewedBooks.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, textPrimaryStyle]}>Recently Viewed</Text>
+            </View>
+            <FlatList
+              data={recentlyViewedBooks}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.recentBookCard, surfaceStyle]}
+                  onPress={() => router.push(`/book/${item.id}`)}
+                >
+                  <View style={styles.recentBookImageContainer}>
+                    <SafeImage
+                      uri={item.images && item.images.length > 0 ? item.images[0] : undefined}
+                      style={styles.recentBookImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.recentBookInfo}>
+                    <Text style={[styles.recentBookTitle, textPrimaryStyle]} numberOfLines={1}>{item.title}</Text>
+                    <View style={styles.recentBookBottomRow}>
+                      <Text style={[styles.recentBookPrice, { color: colors.primary }]}>
+                        {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
+                      </Text>
+                      <View style={styles.distanceBadgeMini}>
+                        <Ionicons name="location" size={10} color={colors.textSecondary} />
+                        <Text style={[styles.distanceTextMini, textSecondaryStyle]}>
+                          {item.distance ? item.distance.toFixed(1) : '0.0'} km
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => `recent-${item.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.featuredList}
+            />
+          </View>
+        )}
 
         {/* CTA */}
         <View style={[styles.ctaContainer, { backgroundColor: colors.primary + '10' }]}>
@@ -787,5 +864,150 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: Spacing.sm,
+  },
+  freeBooksBanner: {
+    marginHorizontal: Spacing.md,
+    height: 140,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: Spacing.xl,
+    backgroundColor: '#000',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  freeBooksBannerImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    opacity: 0.7,
+  },
+  freeBooksBannerOverlay: {
+    flex: 1,
+    padding: Spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  freeBooksBannerContent: {
+    flex: 1,
+  },
+  freeBooksHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  freeBooksBannerTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  freeBooksBannerSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+    maxWidth: '85%',
+  },
+  freeBooksBannerBadge: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  freeBooksBannerBadgeText: {
+    color: Colors.primary,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  recentBookCard: {
+    width: 200,
+    marginRight: 12,
+    padding: 10,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  recentBookImageContainer: {
+    width: 40,
+    height: 55,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  recentBookImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recentBookInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  recentBookTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  recentBookPrice: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  featuredBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  recentBookBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  distanceBadgeMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  distanceText: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  distanceTextMini: {
+    fontSize: 9,
+    fontWeight: '500',
+    marginLeft: 1,
+  },
+  bannerCarouselContainer: {
+    marginBottom: Spacing.md,
+    height: (width - Spacing.md * 2) * (380 / 1500),
+    paddingHorizontal: Spacing.md,
+  },
+  bannerItem: {
+    width: width - Spacing.md * 2,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
   },
 });

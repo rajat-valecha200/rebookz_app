@@ -176,6 +176,7 @@ export default function AccountScreen() {
     },
     { icon: 'help-circle', label: 'Help & Support', onPress: () => router.push('/content/help') },
     { icon: 'chatbox-ellipses-outline', label: 'Contact Support', onPress: () => router.push('/contact-support') },
+    { icon: 'pencil-sharp', label: 'Give Feedback', onPress: () => router.push('/feedback') },
   ];
 
   const aboutItems = [
@@ -294,7 +295,7 @@ export default function AccountScreen() {
   // Guest View
   if (!user) {
     return (
-      <SafeAreaView style={[styles.container, containerStyle]}>
+      <SafeAreaView style={[styles.container, containerStyle]} edges={['top']}>
         <Header />
         <ScrollView contentContainerStyle={styles.guestContainer}>
           <View style={styles.guestContent}>
@@ -353,9 +354,9 @@ export default function AccountScreen() {
 
   // Authenticated View
   return (
-    <SafeAreaView style={[styles.container, containerStyle]}>
+    <SafeAreaView style={[styles.container, containerStyle]} edges={['top']}>
       <Header />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Spacing.xl }}>
         {/* Profile Header */}
         <View style={[styles.profileHeader, containerStyle]}>
           <View style={styles.profileInfoHeader}>
@@ -649,7 +650,7 @@ const styles = StyleSheet.create({
   appInfo: {
     alignItems: 'center',
     marginTop: Spacing.md,
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.lg,
     paddingHorizontal: Spacing.md,
   },
   appName: {
