@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "rebookz-app",
-    "slug": "rebookz-app",
+    "name": "ReBookz",
+    "slug": "ReBookz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo-vertical.png",

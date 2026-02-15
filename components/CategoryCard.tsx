@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import UniversalIcon from './UniversalIcon';
 import { router } from 'expo-router';
 import { Category } from '../types/Category';
 import { Colors } from '../constants/colors';
@@ -26,8 +26,8 @@ export default function CategoryCard({ category, onPress }: CategoryCardProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={handlePress}>
       <View style={[styles.iconContainer, { backgroundColor: (category.color || Colors.primary) + '20' }]}>
-        <Ionicons
-          name={(category.icon || 'book-outline') as any}
+        <UniversalIcon
+          name={category.icon || 'book-outline'}
           size={24}
           color={category.color || Colors.primary}
         />

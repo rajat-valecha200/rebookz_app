@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, Region } from 'react-native-maps';
+import LeafletMap from '../components/LeafletMap';
 import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '../constants/colors';
@@ -28,11 +28,10 @@ export default function MapPickerScreen() {
   const { updateLocation } = useLocation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
 
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  const [region, setRegion] = useState<Region>({
+  const [region, setRegion] = useState({
     latitude: 24.7136,
     longitude: 46.6753,
     latitudeDelta: 0.0922,
@@ -111,9 +110,10 @@ export default function MapPickerScreen() {
       };
 
       setRegion(newRegion);
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(newRegion, 1000);
-      }
+      setRegion(newRegion);
+      // For LeafletMap via WebView, we might not need animateToRegion if we pass it as initialRegion,
+      // but if we want to move it later, we'd need a ref method. 
+      // For now, initialRegion will handle the first load.
 
       // Also fetch address for current location immediately
       setIsMapMoving(true);
@@ -127,28 +127,13 @@ export default function MapPickerScreen() {
     }
   };
 
-  const handleMapPress = (event: any) => {
-    // Optional: allow tapping to move region center?
-    // Usually simpler to just let user drag map to center.
-    // Leaving this as standard map behavior (drag to select) is usually better for "Pick Location" UX.
-    // But if we want tap-to-select:
-    const { coordinate } = event.nativeEvent;
 
-    if (mapRef.current) {
-      mapRef.current.animateToRegion({
-        ...region,
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-      }, 500);
-    }
-  };
-
-  const onRegionChange = (newRegion: Region) => {
+  const onRegionChange = (newRegion: any) => {
     // Just update visual state, no geocoding
     setIsMapMoving(true);
   };
 
-  const onRegionChangeComplete = (newRegion: Region) => {
+  const onRegionChangeComplete = (newRegion: any) => {
     setRegion(newRegion);
     // Trigger geocoding only when movement stops
     reverseGeocodeRegion(newRegion.latitude, newRegion.longitude);
@@ -166,26 +151,11 @@ export default function MapPickerScreen() {
   };
 
   const renderMap = () => (
-    <MapView
-      ref={mapRef}
-      style={styles.map}
+    <LeafletMap
       initialRegion={region}
-      onRegionChange={onRegionChange}
+      onMapMove={() => setIsMapMoving(true)}
       onRegionChangeComplete={onRegionChangeComplete}
-      onPress={handleMapPress}
-      showsUserLocation={true}
-      showsMyLocationButton={false}
-      showsCompass={true}
-      zoomControlEnabled={false}
-      zoomEnabled={true}
-      scrollEnabled={true}
-      rotateEnabled={true}
-      pitchEnabled={true}
-    >
-      {/* We only show a marker if we are NOT moving, or we can show a fixed center pin overlay instead of a marker that moves with the map.
-          A fixed center pin is usually better for "picker" maps.
-      */}
-    </MapView>
+    />
   );
 
   return (
