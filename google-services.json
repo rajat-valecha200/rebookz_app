@@ -1,0 +1,39 @@
+{
+    "project_info": {
+        "project_number": "423734366253",
+        "project_id": "notifications-5c95b",
+        "storage_bucket": "notifications-5c95b.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:423734366253:android:459a8d2713c251851828a4",
+                "android_client_info": {
+                    "package_name": "com.rebookz.app"
+                }
+            },
+            "oauth_client": [
+                {
+                    "client_id": "423734366253-7haha9kbuf58qql0rlf146lpr0cuikrt.apps.googleusercontent.com",
+                    "client_type": 3
+                }
+            ],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyAUo4T77H67HjdJdBixZtJENW8FBl9GIPo"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": [
+                        {
+                            "client_id": "423734366253-7haha9kbuf58qql0rlf146lpr0cuikrt.apps.googleusercontent.com",
+                            "client_type": 3
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

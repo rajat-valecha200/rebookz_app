@@ -20,6 +20,7 @@ import { Spacing } from '../constants/spacing';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { formatDate } from '../utils/date';
 
 interface Ticket {
     _id: string;
@@ -112,7 +113,7 @@ export default function ContactSupportScreen() {
                 <StatusBadge status={item.status} />
             </View>
             <Text style={[styles.ticketDate, { color: colors.textSecondary }]}>
-                {new Date(item.createdAt).toLocaleDateString()}
+                {formatDate(item.createdAt)}
             </Text>
             <Text style={[styles.ticketDesc, { color: colors.textPrimary }]}>{item.description}</Text>
 

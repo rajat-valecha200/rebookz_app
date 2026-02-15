@@ -15,13 +15,12 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/reBookz_v1.png",
-        "backgroundImage": "./assets/images/reBookz_v1.png",
-        "monochromeImage": "./assets/images/reBookz_v1.png"
+        "foregroundImage": "./assets/images/logo-vertical.png",
+        "backgroundImage": "./assets/images/logo-vertical.png",
+        "monochromeImage": "./assets/images/logo-vertical.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true,
       "googleServicesFile": "./google-services.json",
       "package": "com.rebookz.app",
       "permissions": [
@@ -38,7 +37,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/reBookz_v1.png",
+          "image": "./assets/images/logo-vertical.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

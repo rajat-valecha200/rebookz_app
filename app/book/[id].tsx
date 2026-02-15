@@ -22,6 +22,7 @@ import { Book } from '../../types/Book';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocation } from '../../context/LocationContext';
 import SafeImage from '../../components/SafeImage';
+import { formatDate } from '../../utils/date';
 
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -211,7 +212,7 @@ export default function BookDetailsScreen() {
             </View>
             <View style={styles.detailItem}>
               <Ionicons name="calendar" size={16} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>Listed {book.createdAt}</Text>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>Listed {formatDate(book.createdAt)}</Text>
             </View>
           </View>
 
