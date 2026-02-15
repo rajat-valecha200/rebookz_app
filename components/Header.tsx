@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, FlatList,
-  Image,
+  Image, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -38,9 +38,14 @@ export default function Header({ title, showBack, onBack }: HeaderProps = {}) {
           {showBack && (
             <TouchableOpacity
               onPress={onBack || (() => router.back())}
-              style={styles.backButton}
+              style={[styles.backButton, { padding: 4 }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+              <Ionicons
+                name={Platform.OS === 'ios' ? "chevron-back" : "arrow-back"}
+                size={24}
+                color={colors.textPrimary}
+              />
             </TouchableOpacity>
           )}
           <Text style={[styles.simpleTitle, textPrimaryStyle]}>{title}</Text>

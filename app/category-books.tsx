@@ -5,7 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
+  ScrollView, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -128,8 +128,16 @@ export default function CategoryBooksScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Custom Header with Back Button */}
       <View style={[styles.headerBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={[styles.backButton, { padding: 4 }]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons
+            name={Platform.OS === 'ios' ? "chevron-back" : "arrow-back"}
+            size={24}
+            color={colors.textPrimary}
+          />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{getTitle()}</Text>
         <View style={{ width: 40 }} />
