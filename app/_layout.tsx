@@ -57,8 +57,7 @@ const AppLayout = () => {
         <Stack.Screen
           name="favourites"
           options={{
-            headerShown: true,
-            title: 'My Favorites',
+            headerShown: false,
             headerStyle: { backgroundColor: colors.background },
             headerTintColor: colors.textPrimary,
           }}

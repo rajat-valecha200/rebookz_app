@@ -50,7 +50,8 @@ export default function CompleteProfileScreen() {
             });
 
             if (router.canGoBack()) {
-                router.back();
+                // Ensure auth state is updated before going back
+                setTimeout(() => router.back(), 500);
             } else {
                 router.replace('/(tabs)/account');
             }
@@ -112,7 +113,7 @@ export default function CompleteProfileScreen() {
                         placeholderTextColor={colors.textSecondary}
                         keyboardType="email-address"
                         autoCapitalize="none"
-                        editable={!user?.email} // Email often locked if social login or already verified
+                        editable={false} // Locked for safety, email is the source of truth
                     />
                 </View>
 

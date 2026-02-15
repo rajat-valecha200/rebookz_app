@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import UniversalIcon from '../components/UniversalIcon';
 import { useLocalSearchParams, router } from 'expo-router';
 import Header from '../components/Header';
 import BookCard from '../components/BookCard';
@@ -145,7 +146,7 @@ export default function CategoryBooksScreen() {
                   style={[styles.filterButton, activeFilter === opt.id && styles.activeFilter]}
                   onPress={() => setActiveFilter(opt.id)}
                 >
-                  <Text style={[styles.filterText, activeFilter === opt.id && styles.activeFilterText]}>
+                  <Text style={[styles.filterText, activeFilter === opt.id && styles.activeFilterText, activeFilter !== opt.id && { color: colors.textSecondary }]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
@@ -162,11 +163,11 @@ export default function CategoryBooksScreen() {
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.subcategoryCard}
+                style={[styles.subcategoryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => router.push({ pathname: '/category-books', params: { category: item.name } })}
               >
-                <Ionicons name={(item.icon || 'book-outline') as any} size={32} color={item.color || Colors.primary} />
-                <Text style={styles.subcategoryText}>{item.name}</Text>
+                <UniversalIcon name={item.icon || 'book-outline'} size={32} color={item.color || Colors.primary} />
+                <Text style={[styles.subcategoryText, { color: colors.textPrimary }]}>{item.name}</Text>
               </TouchableOpacity>
             )}
           />
@@ -181,8 +182,8 @@ export default function CategoryBooksScreen() {
             />
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={64} color={Colors.textSecondary} />
-              <Text style={styles.emptyStateText}>No books found</Text>
+              <Ionicons name="search-outline" size={64} color={colors.textSecondary} />
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No books found</Text>
             </View>
           )
         )}

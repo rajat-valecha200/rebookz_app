@@ -51,6 +51,7 @@ export default function AccountScreen() {
   const [editEmail, setEditEmail] = React.useState('');
   const [editDob, setEditDob] = React.useState<Date | undefined>(undefined);
   const [editGender, setEditGender] = React.useState('');
+  const [editPhone, setEditPhone] = React.useState('');
   const [showDatePicker, setShowDatePicker] = React.useState(false);
 
   React.useEffect(() => {
@@ -77,6 +78,7 @@ export default function AccountScreen() {
   const openEditModal = () => {
     setEditName(user?.name || '');
     setEditEmail(user?.email || '');
+    setEditPhone(user?.phone || '');
     setEditDob(user?.dob ? new Date(user.dob) : undefined);
     setEditGender(user?.gender || ''); // Assuming User interface has gender now
     setModalVisible(true);
@@ -97,6 +99,7 @@ export default function AccountScreen() {
       await updateProfile({
         name: editName,
         email: editEmail,
+        phone: editPhone,
         dob: editDob?.toISOString(), // Format if needed
         gender: editGender
       });
@@ -216,15 +219,25 @@ export default function AccountScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, textSecondaryStyle]}>Email</Text>
+              <Text style={[styles.inputLabel, textSecondaryStyle]}>Email (Locked)</Text>
               <TextInput
-                style={[styles.modalInput, inputStyle]}
+                style={[styles.modalInput, inputStyle, { opacity: 0.6 }]}
                 value={editEmail}
-                onChangeText={setEditEmail}
+                editable={false}
                 placeholder="Email Address"
                 placeholderTextColor={colors.textSecondary}
-                keyboardType="email-address"
-                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, textSecondaryStyle]}>Phone Number (WhatsApp)</Text>
+              <TextInput
+                style={[styles.modalInput, inputStyle]}
+                value={editPhone}
+                onChangeText={setEditPhone}
+                placeholder="55 123 4567"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="phone-pad"
               />
             </View>
 

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import UniversalIcon from '../../components/UniversalIcon';
 import { router } from 'expo-router';
 import Header from '../../components/Header';
 import { Colors } from '../../constants/colors';
@@ -97,7 +98,11 @@ export default function CategoriesScreen() {
       onPress={() => handleMainCategorySelect(item)}
     >
       <View style={[styles.mainIcon, { backgroundColor: (item.color || colors.primary) + '20' }]}>
-        <Ionicons name={(item.icon || 'book') as any} size={20} color={item.color || colors.primary} />
+        <UniversalIcon
+          name={item.icon || 'book-outline'}
+          size={20}
+          color={item.color || colors.primary}
+        />
       </View>
       <Text
         style={[
@@ -127,8 +132,8 @@ export default function CategoriesScreen() {
           onPress={() => toggleSubCategory(item)}
         >
           <View style={styles.subCategoryLeft}>
-            <Ionicons
-              name={(item.icon || (item.hasChildren ? "folder-outline" : "book-outline")) as any}
+            <UniversalIcon
+              name={item.icon || (item.hasChildren ? "folder-outline" : "book-outline")}
               size={20}
               color={isExpanded ? activeColor : colors.textSecondary}
             />
@@ -201,8 +206,8 @@ export default function CategoriesScreen() {
               contentContainerStyle={styles.subCategoriesList}
               ListHeaderComponent={
                 <View style={styles.subHeader}>
-                  <View style={styles.titleRow}>
-                    <Text style={[styles.mainCategoryTitle, { color: colors.textPrimary }]}>{selectedMain.name}</Text>
+                  <View style={[styles.titleRow, { flexWrap: 'wrap', gap: Spacing.sm }]}>
+                    <Text style={[styles.mainCategoryTitle, { color: colors.textPrimary, flex: 1, minWidth: 150 }]}>{selectedMain.name}</Text>
                     <TouchableOpacity
                       style={[styles.smallBrowseButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}
                       onPress={() => router.push({

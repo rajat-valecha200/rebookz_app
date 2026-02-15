@@ -58,7 +58,7 @@ export default function AddBookScreen() {
     if (isAuthenticated && user && !user.phone) {
       Alert.alert(
         'Profile Incomplete',
-        'Please add your phone number to your profile before listing a book for safety and contact purposes.',
+        'Please complete your profile (name, phone, etc.) before listing a book.',
         [
           { text: 'Later', onPress: () => router.back() },
           { text: 'Complete Profile', onPress: () => router.push('/complete-profile') }
@@ -257,7 +257,11 @@ export default function AddBookScreen() {
           sellerId: user?.id || '101',
           sellerName: user?.name || 'User',
           sellerPhone: user?.phone || '',
-          location: { ...location, address: 'Riyadh' }, // Fix location logic 
+          location: {
+            address: location.address || 'Riyadh, Saudi Arabia',
+            lat: location.lat,
+            lng: location.lng
+          },
           isAvailable: true,
           status: 'available',
           distance: 0,
@@ -285,8 +289,8 @@ export default function AddBookScreen() {
         >
           {/* Image Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Book Image *</Text>
-            <Text style={styles.sectionSubtitle}>Add a clear image of the book</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Book Image *</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Add a clear image of the book</Text>
 
             <View style={styles.imageContainer}>
               {image ? (
@@ -301,9 +305,9 @@ export default function AddBookScreen() {
                 </View>
               ) : (
                 <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-                  <Ionicons name="camera" size={48} color={Colors.textSecondary} />
-                  <Text style={styles.addImageText}>Take Book Photo</Text>
-                  <Text style={styles.imageNote}>Camera only (Prevents spam)</Text>
+                  <Ionicons name="camera" size={48} color={colors.textSecondary} />
+                  <Text style={[styles.addImageText, { color: colors.textSecondary }]}>Take Book Photo</Text>
+                  <Text style={[styles.imageNote, { color: colors.textSecondary }]}>Camera only (Prevents spam)</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -311,25 +315,25 @@ export default function AddBookScreen() {
 
           {/* Basic Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Basic Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Information</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Book Title *</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Book Title *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                 placeholder="Enter book title"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={title}
                 onChangeText={setTitle}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Description</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                 placeholder="Describe the book condition, edition, etc."
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -341,10 +345,10 @@ export default function AddBookScreen() {
 
           {/* Category & Condition */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Category & Condition</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Category & Condition</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Category *</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Category *</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {displayCategories.map((cat) => (
                   <TouchableOpacity
@@ -438,7 +442,7 @@ export default function AddBookScreen() {
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Book Condition</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Book Condition</Text>
               <View style={styles.conditionGrid}>
                 {conditionOptions.map((option) => (
                   <TouchableOpacity
@@ -497,11 +501,11 @@ export default function AddBookScreen() {
 
             {(type === 'sell' || type === 'rent') && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Price (SAR) *</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Price (SAR) *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                   placeholder="Enter price"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="numeric"
@@ -512,12 +516,12 @@ export default function AddBookScreen() {
 
           {/* School/Board Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>School Information (Optional)</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>School Information (Optional)</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>School Name/Board</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>School Name/Board</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: Colors.surface, color: Colors.textPrimary, borderColor: Colors.border }]}
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
                 placeholder="e.g. DPS Riyadh / CBSE"
                 value={schoolBoard}
                 onChangeText={setSchoolBoard}
@@ -528,20 +532,20 @@ export default function AddBookScreen() {
 
           {/* Terms */}
           <View style={styles.termsSection}>
-            <Text style={styles.termsText}>
+            <Text style={[styles.termsText, { color: colors.textSecondary }]}>
               By posting this listing, you agree to our Terms of Service and confirm that:
             </Text>
             <View style={styles.termItem}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-              <Text style={styles.termText}>The book is in the condition described</Text>
+              <Text style={[styles.termText, { color: colors.textSecondary }]}>The book is in the condition described</Text>
             </View>
             <View style={styles.termItem}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-              <Text style={styles.termText}>You have the right to sell/rent this book</Text>
+              <Text style={[styles.termText, { color: colors.textSecondary }]}>You have the right to sell/rent this book</Text>
             </View>
             <View style={styles.termItem}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-              <Text style={styles.termText}>You will respond to interested buyers</Text>
+              <Text style={[styles.termText, { color: colors.textSecondary }]}>You will respond to interested buyers</Text>
             </View>
           </View>
         </ScrollView>

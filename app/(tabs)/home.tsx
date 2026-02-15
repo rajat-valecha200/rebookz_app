@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import UniversalIcon from '../../components/UniversalIcon';
 import { router, useFocusEffect } from 'expo-router';
 import Header from '../../components/Header';
 import BookCard from '../../components/BookCard';

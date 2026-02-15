@@ -57,39 +57,42 @@ export default function FavouritesScreen() {
   }
 
   return (
-    <View style={styles.content}>
-      <View style={styles.statsHeader}>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {favorites.length} {favorites.length === 1 ? 'book' : 'books'} saved
-        </Text>
-      </View>
-
-      {favorites.length > 0 ? (
-        <FlatList
-          data={favorites}
-          renderItem={({ item }) => (
-            <BookCard book={item} />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          <Ionicons name="heart-outline" size={64} color={colors.textSecondary} />
-          <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No favorites yet</Text>
-          <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
-            Tap the heart icon on any book to add it here
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.content}>
+        <Header title="My Favourites" showBack={true} />
+        <View style={styles.statsHeader}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {favorites.length} {favorites.length === 1 ? 'book' : 'books'} saved
           </Text>
-          <TouchableOpacity
-            style={[styles.browseButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/(tabs)/home')}
-          >
-            <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse Books</Text>
-          </TouchableOpacity>
         </View>
-      )}
-    </View>
+
+        {favorites.length > 0 ? (
+          <FlatList
+            data={favorites}
+            renderItem={({ item }) => (
+              <BookCard book={item} />
+            )}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="heart-outline" size={64} color={colors.textSecondary} />
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No favorites yet</Text>
+            <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
+              Tap the heart icon on any book to add it here
+            </Text>
+            <TouchableOpacity
+              style={[styles.browseButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/(tabs)/home')}
+            >
+              <Text style={[styles.browseButtonText, { color: colors.background }]}>Browse Books</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
