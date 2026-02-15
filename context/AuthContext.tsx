@@ -138,7 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
+      console.log('Google Sign-In Success:', JSON.stringify(userInfo));
+
+      // Support both old and new library structures
+      const idToken = userInfo.data?.idToken || userInfo.idToken || (userInfo as any).user?.idToken;
 
       if (idToken) {
         const { data } = await api.post('/users/google-login', { token: idToken });
@@ -159,9 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try { await api.put('/users/profile', { pushToken: token }); } catch (e) { }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google Sign-In Error:', error);
-      // alert('Google Sign-In failed');
+      const errorMsg = error.message || error.toString() || 'Unknown Google Auth Error';
+      throw new Error(errorMsg); // Re-throw with message to let UI handle loading state/alerts
     }
   };
 

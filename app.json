@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo-vertical.png",
     "scheme": "rebookzapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -14,10 +14,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/logo-vertical.png",
-        "backgroundImage": "./assets/images/logo-vertical.png",
-        "monochromeImage": "./assets/images/logo-vertical.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/logo-vertical.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

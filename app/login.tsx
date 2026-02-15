@@ -32,9 +32,10 @@ export default function LoginScreen() {
     try {
       await googleLogin();
       // AuthContext handles state and redirection
-    } catch (error) {
+    } catch (error: any) {
       setLoading(false);
-      Alert.alert('Login Failed', 'Unable to sign in with Google. Please try again.');
+      const msg = error.message || 'Unable to sign in with Google. Please try again.';
+      Alert.alert('Login Failed', msg);
     }
   };
 

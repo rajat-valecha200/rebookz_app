@@ -54,8 +54,19 @@ export default function AddBookScreen() {
   const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
+    // Enforce profile completion before listing
+    if (isAuthenticated && user && !user.phone) {
+      Alert.alert(
+        'Profile Incomplete',
+        'Please add your phone number to your profile before listing a book for safety and contact purposes.',
+        [
+          { text: 'Later', onPress: () => router.back() },
+          { text: 'Complete Profile', onPress: () => router.push('/complete-profile') }
+        ]
+      );
+    }
     loadCategories();
-  }, []);
+  }, [isAuthenticated, user]);
 
   const loadCategories = async () => {
     const mainCats = await categoryService.getMainCategories();
@@ -307,6 +318,7 @@ export default function AddBookScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Enter book title"
+                placeholderTextColor={Colors.textSecondary}
                 value={title}
                 onChangeText={setTitle}
               />
@@ -317,6 +329,7 @@ export default function AddBookScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe the book condition, edition, etc."
+                placeholderTextColor={Colors.textSecondary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -488,6 +501,7 @@ export default function AddBookScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter price"
+                  placeholderTextColor={Colors.textSecondary}
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="numeric"
