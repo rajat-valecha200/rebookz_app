@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
   ScrollView,
   Image,
 } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -21,7 +20,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
-  const { googleLogin, dummyLogin } = useAuth();
+  const { googleLogin, appleLogin, dummyLogin } = useAuth();
 
   const handleSkip = () => {
     router.replace('/(tabs)/home');
@@ -31,7 +30,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await googleLogin();
-      // AuthContext handles state and redirection
     } catch (error: any) {
       setLoading(false);
       const msg = error.message || 'Unable to sign in with Google. Please try again.';
@@ -39,11 +37,23 @@ export default function LoginScreen() {
     }
   };
 
+  const handleAppleLogin = async () => {
+    setLoading(true);
+    try {
+      await appleLogin();
+    } catch (error: any) {
+      setLoading(false);
+      if (error.message !== 'ERR_CANCELED') {
+        Alert.alert('Login Failed', error.message || 'Unable to sign in with Apple.');
+      }
+    }
+  };
+
   const handleDummyLogin = async () => {
     setLoading(true);
     try {
       await dummyLogin();
-    } catch (error) {
+    } catch {
       setLoading(false);
       Alert.alert('Demo Login Failed', 'Unable to continue as demo user.');
     }
@@ -81,7 +91,7 @@ export default function LoginScreen() {
 
           <View style={styles.loginCard}>
             <Text style={styles.loginCardTitle}>Sign In</Text>
-            <Text style={styles.loginCardSubtitle}>Use your Google account to get started</Text>
+            <Text style={styles.loginCardSubtitle}>Choose your preferred login method</Text>
 
             <TouchableOpacity
               style={[styles.socialButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd' }]}
@@ -95,6 +105,16 @@ export default function LoginScreen() {
               <Text style={[styles.socialButtonText, { color: '#757575' }]}>Continue with Google</Text>
               {loading && <ActivityIndicator size="small" color={Colors.primary} style={{ marginLeft: 10 }} />}
             </TouchableOpacity>
+
+            {Platform.OS === 'ios' && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={12}
+                style={[styles.socialButton, { marginTop: 12 }]}
+                onPress={handleAppleLogin}
+              />
+            )}
 
             <TouchableOpacity
               style={[styles.socialButton, { backgroundColor: '#f0f0f0', marginTop: 12, borderWidth: 0 }]}

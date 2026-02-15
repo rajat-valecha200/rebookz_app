@@ -71,7 +71,7 @@ export default function TermsScreen() {
 
             <ScrollView contentContainerStyle={styles.content}>
                 <Text style={[styles.introText, { color: colors.textSecondary }]}>
-                    Welcome to ReBookz! These terms and conditions outline the rules and regulations for the use of ReBookz's Application.
+                    Welcome to ReBookz! These terms and conditions outline the rules and regulations for the use of ReBookz&apos;s Application.
                 </Text>
                 {termsData.map((term, index) => (
                     <TermSection key={index} title={term.title} content={term.content} colors={colors} />

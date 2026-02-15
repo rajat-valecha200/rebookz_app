@@ -120,9 +120,9 @@ export default function RequestBookScreen() {
                         <View style={[styles.banner, surfaceStyle]}>
                             <Ionicons name="search-circle" size={48} color={colors.primary} />
                             <View style={styles.bannerTextContainer}>
-                                <Text style={[styles.bannerTitle, textPrimaryStyle]}>Can't find a book?</Text>
+                                <Text style={[styles.bannerTitle, textPrimaryStyle]}>Can&apos;t find a book?</Text>
                                 <Text style={[styles.bannerText, textSecondaryStyle]}>
-                                    Post a request and we'll notify everyone. Sellers can offer it to you directly.
+                                    Post a request and we&apos;ll notify everyone. Sellers can offer it to you directly.
                                 </Text>
                             </View>
                         </View>

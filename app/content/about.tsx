@@ -33,7 +33,7 @@ export default function AboutScreen() {
                 <Text style={[styles.text, { color: colors.textSecondary }]}>
                     ReBookz is a platform for buying, selling, and swapping used books.
                     {'\n\n'}
-                    Our mission is to promote reading and sustainability by giving books a second life. Whether you're a student looking for affordable textbooks or a fiction lover hunting for your next adventure, ReBookz connects you with fellow readers in your community.
+                    Our mission is to promote reading and sustainability by giving books a second life. Whether you&apos;re a student looking for affordable textbooks or a fiction lover hunting for your next adventure, ReBookz connects you with fellow readers in your community.
                     {'\n\n'}
                     Made with ❤️.
                 </Text>

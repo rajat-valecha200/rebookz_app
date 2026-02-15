@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import api from '../services/api';
 
 Notifications.setNotificationHandler({
@@ -40,6 +41,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   skipLogin: () => void;
   googleLogin: () => Promise<void>;
+  appleLogin: () => Promise<void>;
   dummyLogin: () => Promise<void>;
 }
 
@@ -169,6 +171,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const appleLogin = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      console.log('Apple Sign-In Success:', JSON.stringify(credential));
+
+      if (credential.identityToken) {
+        const { data } = await api.post('/users/apple-login', {
+          token: credential.identityToken,
+          user: credential.fullName ? {
+            name: `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim(),
+            email: credential.email
+          } : undefined
+        });
+
+        const userData: any = data;
+        const user = { ...userData, id: userData._id };
+        setUser(user);
+        await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
+
+        if (userData.isNewUser) {
+          router.replace('/complete-profile');
+        } else {
+          router.replace('/(tabs)/home');
+        }
+
+        // Register push token after login
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          try { await api.put('/users/profile', { pushToken: token }); } catch (e) { }
+        }
+      }
+    } catch (error: any) {
+      if (error.code === 'ERR_CANCELED') {
+        // User canceled the login flow
+        return;
+      }
+      console.error('Apple Sign-In Error:', error);
+      throw new Error(error.message || 'Apple Sign-In Failed');
+    }
+  };
+
   const sendOtp = async (phone: string) => {
     try {
       await api.post('/users/send-otp', { phone });
@@ -249,7 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin, googleLogin, dummyLogin }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin, googleLogin, appleLogin, dummyLogin }}>
       {children}
     </AuthContext.Provider>
   );

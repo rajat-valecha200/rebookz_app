@@ -164,7 +164,7 @@ export default function ContactSupportScreen() {
                 {activeTab === 'new' ? (
                     <ScrollView contentContainerStyle={styles.content}>
                         <Text style={[styles.introText, { color: colors.textSecondary }]}>
-                            Tell us what's on your mind. We're here to help.
+                            Tell us what&apos;s on your mind. We&apos;re here to help.
                         </Text>
 
                         <View style={styles.form}>
