@@ -37,7 +37,7 @@ const carouselData = [
   {
     id: 1,
     title: 'Find Your Next Book',
-    subtitle: 'Search millions of books nearby. Buy, Rent or Swap with ease.',
+    subtitle: 'Search millions of books nearby. Buy or Donate with ease.',
     icon: 'search',
     color: '#4A90E2', // Premium Blue
     cta: 'Explore Now',
@@ -55,7 +55,7 @@ const carouselData = [
   {
     id: 3,
     title: 'Sell Your Book',
-    subtitle: 'Turn your old books into cash or swap for something new.',
+    subtitle: 'Turn your old books into cash or donate for a good cause.',
     icon: 'cash',
     color: '#F1C40F', // Premium Gold
     cta: 'List Now',
@@ -227,9 +227,7 @@ export default function HomeScreen() {
         <View style={[styles.featuredBadge, {
           backgroundColor:
             item.type === 'sell' ? colors.primary :
-              item.type === 'rent' ? colors.info :
-                item.type === 'swap' ? colors.warning :
-                  colors.success
+              colors.success
         }]}>
           <Text style={[styles.featuredBadgeText, { color: colors.surface }]}>{item.type.toUpperCase()}</Text>
         </View>
@@ -238,7 +236,7 @@ export default function HomeScreen() {
         <Text style={[styles.featuredTitle, textPrimaryStyle]} numberOfLines={2}>{item.title}</Text>
         <View style={styles.featuredBottomRow}>
           <Text style={[styles.featuredPrice, { color: colors.primary }]}>
-            {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
+            {item.type === 'sell' ? `${item.price} SAR` : 'FREE'}
           </Text>
           <View style={styles.distanceBadge}>
             <Ionicons name="location" size={10} color={colors.textSecondary} />
@@ -458,7 +456,7 @@ export default function HomeScreen() {
                     <Text style={[styles.recentBookTitle, textPrimaryStyle]} numberOfLines={1}>{item.title}</Text>
                     <View style={styles.recentBookBottomRow}>
                       <Text style={[styles.recentBookPrice, { color: colors.primary }]}>
-                        {item.type === 'sell' || item.type === 'rent' ? `${item.price} SAR` : 'FREE'}
+                        {item.type === 'sell' ? `${item.price} SAR` : 'FREE'}
                       </Text>
                       <View style={styles.distanceBadgeMini}>
                         <Ionicons name="location" size={10} color={colors.textSecondary} />
@@ -495,6 +493,30 @@ export default function HomeScreen() {
             <Ionicons name="add-circle" size={20} color={colors.background} />
             <Text style={[styles.ctaButtonText, { color: colors.background }]}>List a Book</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Safety Banner Card */}
+        <View style={[styles.safetyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.safetyCardHeader}>
+            <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
+            <Text style={[styles.safetyCardTitle, { color: colors.textPrimary }]}>REBOOKZ SAFETY TIPS</Text>
+          </View>
+          <Text style={[styles.safetyCardSubtitle, { color: colors.textSecondary }]}>
+            Your safety is our priority. Follow these guidelines for a secure experience.
+          </Text>
+          <View style={styles.safetyGrid}>
+            {[
+              { icon: 'people', text: 'Meet in Public' },
+              { icon: 'checkmark-circle', text: 'Verify Book' },
+              { icon: 'cash', text: 'Secure Pay' },
+              { icon: 'hand-left', text: 'No Advance' }
+            ].map((item, idx) => (
+              <View key={idx} style={styles.safetyGridItem}>
+                <Ionicons name={item.icon as any} size={16} color={colors.primary} />
+                <Text style={[styles.safetyGridText, { color: colors.textPrimary }]}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -1010,5 +1032,50 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
+  },
+  safetyCard: {
+    margin: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: 20,
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  safetyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  safetyCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  safetyCardSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: Spacing.md,
+  },
+  safetyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  safetyGridItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  safetyGridText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

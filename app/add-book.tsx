@@ -124,8 +124,6 @@ export default function AddBookScreen() {
 
   const typeOptions: { value: BookType; label: string; icon: string }[] = [
     { value: 'sell', label: 'Sell', icon: 'cash' },
-    { value: 'rent', label: 'Rent', icon: 'calendar' },
-    { value: 'swap', label: 'Swap', icon: 'swap-horizontal' },
     { value: 'donate', label: 'Donate', icon: 'heart' },
   ];
 
@@ -239,7 +237,7 @@ export default function AddBookScreen() {
         subcategory: subSubcategory || subcategory || 'Other',
         condition,
         type,
-        price: (type === 'sell' || type === 'rent') ? parseInt(price) : 0,
+        price: (type === 'sell') ? parseInt(price) : 0,
         images: imageUrl ? [imageUrl!] : [],
         school: schoolBoard.trim(),
         classLevel: classLevel.trim()
@@ -499,7 +497,7 @@ export default function AddBookScreen() {
               ))}
             </View>
 
-            {(type === 'sell' || type === 'rent') && (
+            {(type === 'sell') && (
               <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Price (SAR) *</Text>
                 <TextInput
@@ -541,7 +539,7 @@ export default function AddBookScreen() {
             </View>
             <View style={styles.termItem}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-              <Text style={[styles.termText, { color: colors.textSecondary }]}>You have the right to sell/rent this book</Text>
+              <Text style={[styles.termText, { color: colors.textSecondary }]}>You have the right to share this book</Text>
             </View>
             <View style={styles.termItem}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />

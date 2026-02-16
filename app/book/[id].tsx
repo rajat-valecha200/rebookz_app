@@ -67,7 +67,8 @@ export default function BookDetailsScreen() {
       return;
     }
 
-    const message = `Hi, I'm interested in your book "${book?.title}" on ReBookz.`;
+    const bookUrl = `https://rebookz.com/book/${book?.id}`;
+    const message = `🔒 ReBookz Safety Guidelines\n\nNever pay money or hand over products in advance.\n\nDo not scan any QR code or send even 1 SAR to anyone.\n\nNever share your OTP, UPI PIN, or any banking details with anyone.\n\nAlways take necessary precautions when meeting buyers or sellers. Meet in safe, public places.\n\nReBookz is not responsible for any fraudulent activities.\n\nYour Book: ${bookUrl} 📚 ♻\n\nHi there,\nI'm interested in your book "${book?.title}" posted on Rebookz App.\n\nIs it available?`;
     const url = `whatsapp://send?phone=${book?.sellerPhone}&text=${encodeURIComponent(message)}`;
 
     Linking.openURL(url).catch(() => {
@@ -168,16 +169,14 @@ export default function BookDetailsScreen() {
           {/* Price and Status */}
           <View style={styles.headerRow}>
             <Text style={[styles.price, { color: colors.primary }]}>
-              {book.type === 'sell' || book.type === 'rent' ? `${book.price} SAR` : 'FREE'}
+              {book.type === 'sell' ? `${book.price} SAR` : 'FREE'}
             </Text>
             <View style={[
               styles.statusBadge,
               {
                 backgroundColor:
                   book.type === 'sell' ? colors.primary + '20' :
-                    book.type === 'rent' ? colors.info + '20' :
-                      book.type === 'swap' ? colors.warning + '20' :
-                        colors.success + '20'
+                    colors.success + '20'
               }
             ]}>
               <Text style={[
@@ -185,9 +184,7 @@ export default function BookDetailsScreen() {
                 {
                   color:
                     book.type === 'sell' ? colors.primary :
-                      book.type === 'rent' ? colors.info :
-                        book.type === 'swap' ? colors.warning :
-                          colors.success
+                      colors.success
                 }
               ]}>
                 {book.type.toUpperCase()}
@@ -277,17 +274,22 @@ export default function BookDetailsScreen() {
             </View>
           </View>
 
-          {/* Safety Tips */}
-          <View style={[styles.safetySection, { backgroundColor: colors.warning + '10' }]}>
-            <Ionicons name="shield-checkmark" size={20} color={colors.warning} />
-            <Text style={[styles.safetyTitle, { color: colors.textPrimary }]}>Safety Tips</Text>
-            <Text style={[styles.safetyText, { color: colors.textSecondary }]}>
-              • Meet in public places{'\n'}
-              • Inspect the book before exchange{'\n'}
-              • Avoid sharing personal information{'\n'}
-              • Report suspicious activity
-            </Text>
+          {/* Safety Alerts Box */}
+          <View style={[styles.safetyAlertContainer, { backgroundColor: '#FFF5F5', borderColor: '#FFD1D1' }]}>
+            <View style={styles.safetyAlertHeader}>
+              <Ionicons name="shield-checkmark" size={20} color="#E53E3E" />
+              <Text style={styles.safetyAlertTitle}>REBOOKZ SAFETY ALERTS</Text>
+            </View>
+            <View style={styles.safetyAlertContent}>
+              <Text style={styles.safetyAlertItem}>• Meet in a public place</Text>
+              <Text style={styles.safetyAlertItem}>• Verify the book condition before payment</Text>
+              <Text style={styles.safetyAlertItem}>• Prefer Cash on delivery or secure digital payment</Text>
+              <Text style={styles.safetyAlertItem}>• Do not share any personal OTP or Bank login details or any other sensitive information</Text>
+              <Text style={styles.safetyAlertItem}>• Report suspicious users via the app</Text>
+            </View>
           </View>
+
+
         </View>
       </ScrollView>
 
@@ -486,6 +488,31 @@ const styles = StyleSheet.create({
     color: Colors.info,
     fontSize: 14,
     fontWeight: '600',
+  },
+  safetyAlertContainer: {
+    borderRadius: 12,
+    padding: Spacing.md,
+    marginTop: Spacing.lg,
+    borderWidth: 1,
+  },
+  safetyAlertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  safetyAlertTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#E53E3E',
+    marginLeft: Spacing.sm,
+  },
+  safetyAlertContent: {
+    gap: 4,
+  },
+  safetyAlertItem: {
+    fontSize: 14,
+    color: '#2D3748',
+    lineHeight: 20,
   },
   safetySection: {
     backgroundColor: Colors.warning + '10',

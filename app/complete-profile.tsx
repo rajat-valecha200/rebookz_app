@@ -119,18 +119,16 @@ export default function CompleteProfileScreen() {
 
                 <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
+                    <Text style={styles.inputHint}>Include country code without '+' (e.g. 966551234567)</Text>
                     <View style={[styles.phoneInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <View style={[styles.prefix, { borderRightColor: colors.border }]}>
-                            <Text style={{ color: colors.textPrimary }}>+966</Text>
-                        </View>
                         <TextInput
                             style={[styles.phoneInput, { color: colors.textPrimary }]}
                             value={phone}
                             onChangeText={setPhone}
-                            placeholder="55 123 4567"
+                            placeholder="966 55 123 4567"
                             placeholderTextColor={colors.textSecondary}
                             keyboardType="phone-pad"
-                            maxLength={10}
+                            maxLength={15}
                         />
                     </View>
                 </View>
@@ -310,5 +308,12 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 12,
         fontSize: 16,
-    }
+    },
+    inputHint: {
+        fontSize: 11,
+        color: '#E53E3E',
+        marginTop: -4,
+        marginBottom: 8,
+        fontWeight: '500',
+    },
 });

@@ -6,7 +6,7 @@ export interface Book {
   category: string;
   subcategory: string;
   condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-  type: 'sell' | 'rent' | 'swap' | 'donate';
+  type: 'sell' | 'donate';
   price: number;
   images: string[];
   sellerId: string;
@@ -27,5 +27,5 @@ export interface Book {
 }
 
 export type BookCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-export type BookType = 'sell' | 'rent' | 'swap' | 'donate';
+export type BookType = 'sell' | 'donate';
 export type BookStatus = 'available' | 'reserved' | 'sold';

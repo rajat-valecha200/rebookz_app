@@ -231,11 +231,12 @@ export default function AccountScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.inputLabel, textSecondaryStyle]}>Phone Number (WhatsApp)</Text>
+              <Text style={styles.inputHint}>Include country code without '+' (e.g. 966551234567)</Text>
               <TextInput
                 style={[styles.modalInput, inputStyle]}
                 value={editPhone}
                 onChangeText={setEditPhone}
-                placeholder="55 123 4567"
+                placeholder="966 55 123 4567"
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
@@ -274,18 +275,26 @@ export default function AccountScreen() {
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.sm }]}>
                 <Text style={[styles.inputLabel, textSecondaryStyle]}>Gender</Text>
-                <View style={[styles.pickerContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  <Picker
-                    selectedValue={editGender}
-                    onValueChange={(itemValue) => setEditGender(itemValue)}
-                    style={[styles.picker, { color: colors.textPrimary }]}
-                    dropdownIconColor={colors.textSecondary}
-                  >
-                    <Picker.Item label="Select" value="" />
-                    <Picker.Item label="Male" value="male" />
-                    <Picker.Item label="Female" value="female" />
-                    <Picker.Item label="Other" value="other" />
-                  </Picker>
+                <View style={[styles.genderContainer]}>
+                  {['male', 'female', 'other'].map((g) => (
+                    <TouchableOpacity
+                      key={g}
+                      style={[
+                        styles.genderButton,
+                        { borderColor: colors.border, backgroundColor: colors.surface },
+                        editGender === g && { backgroundColor: colors.primary, borderColor: colors.primary }
+                      ]}
+                      onPress={() => setEditGender(g)}
+                    >
+                      <Text style={[
+                        styles.genderButtonText,
+                        { color: colors.textPrimary },
+                        editGender === g && { color: colors.background }
+                      ]}>
+                        {g.charAt(0).toUpperCase() + g.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
             </View>
@@ -799,6 +808,23 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     gap: 4,
   },
+  genderContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  genderButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genderButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -822,5 +848,12 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderWidth: 1,
     borderRadius: 20,
+  },
+  inputHint: {
+    fontSize: 11,
+    color: '#E53E3E',
+    marginTop: -2,
+    marginBottom: 4,
+    fontWeight: '500',
   },
 });
