@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import UniversalIcon from '../components/UniversalIcon';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '../constants/colors';
@@ -360,8 +361,8 @@ export default function AddBookScreen() {
                       setSubcategory('');
                     }}
                   >
-                    <Ionicons
-                      name={cat.icon as any}
+                    <UniversalIcon
+                      name={cat.icon || 'book-outline'}
                       size={20}
                       color={category === cat.name ? Colors.background : cat.color}
                     />

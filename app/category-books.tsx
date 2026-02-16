@@ -50,13 +50,10 @@ export default function CategoryBooksScreen() {
       const subs = await categoryService.getChildCategories(currentCat.id);
       if (subs.length > 0) {
         setSubcategories(subs);
-        setBooks([]);
-        setFilteredBooks([]);
-        return;
       }
+    } else {
+      setSubcategories([]);
     }
-
-    setSubcategories([]);
 
     try {
       let booksData: Book[] = [];
@@ -117,7 +114,6 @@ export default function CategoryBooksScreen() {
     { id: 'price_low', label: 'Price: Low to High' },
     { id: 'price_high', label: 'Price: High to Low' },
     { id: 'sell', label: 'Buy' },
-    { id: 'rent', label: 'Rent' },
     { id: 'donate', label: 'Free' },
   ];
 
@@ -160,37 +156,36 @@ export default function CategoryBooksScreen() {
           </View>
         )}
 
-        {subcategories.length > 0 ? (
+        {subcategories.length > 0 && (
+          <View style={styles.subcategoriesSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subcategoriesScroll}>
+              {subcategories.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.subcategoryBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() => router.push({ pathname: '/category-books', params: { category: item.name } })}
+                >
+                  <UniversalIcon name={item.icon || 'book-outline'} size={18} color={item.color || Colors.primary} />
+                  <Text style={[styles.subcategoryBadgeText, { color: colors.textPrimary }]}>{item.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {filteredBooks.length > 0 ? (
           <FlatList
-            data={subcategories}
+            data={filteredBooks}
+            renderItem={({ item }) => <BookCard book={item} />}
             keyExtractor={(item) => item.id}
-            numColumns={2}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.subcategoryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                onPress={() => router.push({ pathname: '/category-books', params: { category: item.name } })}
-              >
-                <UniversalIcon name={item.icon || 'book-outline'} size={32} color={item.color || Colors.primary} />
-                <Text style={[styles.subcategoryText, { color: colors.textPrimary }]}>{item.name}</Text>
-              </TouchableOpacity>
-            )}
+            showsVerticalScrollIndicator={false}
           />
         ) : (
-          filteredBooks.length > 0 ? (
-            <FlatList
-              data={filteredBooks}
-              renderItem={({ item }) => <BookCard book={item} />}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="search-outline" size={64} color={colors.textSecondary} />
-              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No books found</Text>
-            </View>
-          )
+          <View style={styles.emptyState}>
+            <Ionicons name="search-outline" size={64} color={colors.textSecondary} />
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>No books found</Text>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -255,30 +250,38 @@ const styles = StyleSheet.create({
   listContent: {
     // padding: Spacing.md,
   },
-  subcategoryCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    margin: Spacing.xs,
-    padding: Spacing.lg,
-    borderRadius: 12,
+  subcategoriesSection: {
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  subcategoriesScroll: {
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
+  },
+  subcategoryBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 120,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    gap: 8,
   },
-  subcategoryText: {
-    marginTop: Spacing.md,
-    fontSize: 16,
+  subcategoryBadgeText: {
+    fontSize: 14,
     fontWeight: '600',
     color: Colors.textPrimary,
-    textAlign: 'center',
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
+    paddingTop: 100,
   },
   emptyStateText: {
     fontSize: 18,
