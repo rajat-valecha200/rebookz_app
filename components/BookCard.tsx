@@ -127,8 +127,6 @@ export default function BookCard({
   const getTypeLabel = (type: Book['type']) => {
     switch (type) {
       case 'sell': return 'Sell';
-      case 'rent': return 'Rent';
-      case 'swap': return 'Swap';
       case 'donate': return 'Free';
       default: return type;
     }
@@ -137,8 +135,6 @@ export default function BookCard({
   const getTypeColor = (type: Book['type']) => {
     switch (type) {
       case 'sell': return colors.primary;
-      case 'rent': return colors.info;
-      case 'swap': return colors.warning;
       case 'donate': return colors.success;
       default: return colors.textSecondary;
     }
@@ -225,7 +221,7 @@ export default function BookCard({
 
           {/* Price and Condition */}
           <View style={styles.infoRow}>
-            {book.type === 'sell' || book.type === 'rent' ? (
+            {book.type === 'sell' ? (
               <Text style={[styles.price, { color: colors.primary }]}>{book.price} SAR</Text>
             ) : (
               <Text style={[styles.priceFree, { color: colors.success }]}>Free</Text>

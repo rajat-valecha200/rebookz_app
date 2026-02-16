@@ -94,9 +94,6 @@ export default function CategoryBooksScreen() {
       case 'sell':
         result = result.filter(b => b.type === 'sell');
         break;
-      case 'rent':
-        result = result.filter(b => b.type === 'rent');
-        break;
       case 'donate':
         result = result.filter(b => b.type === 'donate');
         break;
