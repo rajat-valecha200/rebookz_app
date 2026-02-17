@@ -9,10 +9,23 @@ import {
   Linking,
   Alert,
   Share,
+  Modal,
+  Dimensions,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView
+} from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { bookService } from '../../services/bookService';
@@ -31,7 +44,68 @@ export default function BookDetailsScreen() {
   const { colors } = useTheme(); // Use Theme Colors
   const [book, setBook] = useState<Book | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+
+  // Zoom and Pan values
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      scale.value = savedScale.value * e.scale;
+    })
+    .onEnd(() => {
+      if (scale.value < 1) {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+      } else {
+        savedScale.value = scale.value;
+      }
+    });
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      if (scale.value > 1) {
+        translateX.value = savedTranslateX.value + e.translationX;
+        translateY.value = savedTranslateY.value + e.translationY;
+      }
+    })
+    .onEnd(() => {
+      if (scale.value > 1) {
+        savedTranslateX.value = translateX.value;
+        savedTranslateY.value = translateY.value;
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
+
+  const resetImage = () => {
+    scale.value = withSpring(1);
+    savedScale.value = 1;
+    translateX.value = withSpring(0);
+    translateY.value = withSpring(0);
+    savedTranslateX.value = 0;
+    savedTranslateY.value = 0;
+  };
 
   useEffect(() => {
     const loadBookData = async () => {
@@ -149,7 +223,7 @@ export default function BookDetailsScreen() {
         <View style={styles.imageContainer}>
           <SafeImage
             uri={book.images && book.images.length > 0 ? book.images[0] : undefined}
-            style={styles.image}
+            style={styles.bookImage}
             resizeMode="cover"
           />
           <TouchableOpacity
@@ -159,8 +233,15 @@ export default function BookDetailsScreen() {
             <Ionicons
               name={isFavorite ? "heart" : "heart-outline"}
               size={24}
-              color={isFavorite ? colors.danger : colors.background}
+              color={isFavorite ? colors.danger : "#FFF"}
             />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.expandButton}
+            onPress={() => setIsImageViewerVisible(true)}
+          >
+            <Ionicons name="expand" size={20} color="#FFF" />
           </TouchableOpacity>
         </View>
 
@@ -223,17 +304,17 @@ export default function BookDetailsScreen() {
           {book.school && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>School Information</Text>
-              <View style={[styles.sellerCard, { backgroundColor: colors.surface }]}>
+              <View style={[styles.detailsContainer, { backgroundColor: colors.surface }]}>
                 <View style={styles.detailItem}>
                   <Ionicons name="school" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.detailText, { color: colors.textSecondary, marginLeft: 8 }]}>
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                     {book.school}
                   </Text>
                 </View>
                 {book.classLevel && (
                   <View style={[styles.detailItem, { marginTop: 8 }]}>
                     <Ionicons name="layers" size={16} color={colors.textSecondary} />
-                    <Text style={[styles.detailText, { color: colors.textSecondary, marginLeft: 8 }]}>
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                       Grade/Class: {book.classLevel}
                     </Text>
                   </View>
@@ -245,10 +326,13 @@ export default function BookDetailsScreen() {
           {/* Seller Info */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Seller Information</Text>
-            <View style={[styles.sellerCard, { backgroundColor: colors.surface }]}>
+            <View style={[styles.sellerContainer, { backgroundColor: colors.surface }]}>
+              <View style={[styles.sellerAvatar, { backgroundColor: colors.primary }]}>
+                <Text style={styles.avatarText}>{book.sellerName.substring(0, 1).toUpperCase()}</Text>
+              </View>
               <View style={styles.sellerInfo}>
                 <Text style={[styles.sellerName, { color: colors.textPrimary }]}>{book.sellerName}</Text>
-                <Text style={[styles.sellerLocation, { color: colors.textSecondary }]}>
+                <Text style={[styles.detailText, { color: colors.textSecondary, marginTop: 2 }]}>
                   <Ionicons name="location" size={12} color={colors.textSecondary} />
                   {` ${book.location.address}`}
                 </Text>
@@ -275,7 +359,7 @@ export default function BookDetailsScreen() {
           </View>
 
           {/* Safety Alerts Box */}
-          <View style={[styles.safetyAlertContainer, { backgroundColor: '#FFF5F5', borderColor: '#FFD1D1' }]}>
+          <View style={[styles.safetyAlertBox, { backgroundColor: '#FFF5F5', borderColor: '#FFD1D1' }]}>
             <View style={styles.safetyAlertHeader}>
               <Ionicons name="shield-checkmark" size={20} color="#E53E3E" />
               <Text style={styles.safetyAlertTitle}>REBOOKZ SAFETY ALERTS</Text>
@@ -310,6 +394,60 @@ export default function BookDetailsScreen() {
           <Text style={[styles.contactButtonText, { color: colors.background }]}>WhatsApp</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Full Screen Image Viewer Modal */}
+      <Modal
+        visible={isImageViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setIsImageViewerVisible(false);
+          resetImage();
+        }}
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <LinearGradient
+              colors={['rgba(0,0,0,0.6)', 'transparent']}
+              style={[styles.modalGradientTop, { height: insets.top + 30 }]}
+            />
+
+            <TouchableOpacity
+              style={[styles.closeModalButton, { top: insets.top + 10, right: 20, position: 'absolute', zIndex: 10 }]}
+              onPress={() => {
+                setIsImageViewerVisible(false);
+                resetImage();
+              }}
+            >
+              <Ionicons name="close" size={28} color="#000" />
+            </TouchableOpacity>
+
+            <View style={styles.zoomContainer}>
+              <GestureDetector gesture={composedGesture}>
+                <Animated.View style={[styles.fullImageContainer, animatedStyle]}>
+                  <SafeImage
+                    uri={book.images && book.images.length > 0 ? book.images[0] : undefined}
+                    style={styles.fullImage}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              </GestureDetector>
+            </View>
+
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.6)']}
+              style={styles.modalGradientBottom}
+            />
+
+            <View style={[styles.modalMinimalFooter, { marginBottom: insets.bottom + 10 }]}>
+              <Text style={styles.modalMinimalTitle} numberOfLines={1}>{book.title}</Text>
+              <Text style={styles.modalMinimalPrice}>
+                {book.type === 'sell' ? `${book.price} SAR` : 'FREE'} • {book.condition.replace('_', ' ').toUpperCase()}
+              </Text>
+            </View>
+          </View>
+        </GestureHandlerRootView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -354,23 +492,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  notFound: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  notFoundText: {
-    fontSize: 18,
-    color: Colors.textSecondary,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
   imageContainer: {
-    height: 300,
+    height: 350,
     position: 'relative',
+    backgroundColor: '#F7FAFC',
   },
-  image: {
+  bookImage: {
     width: '100%',
     height: '100%',
   },
@@ -384,9 +511,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
+  },
+  expandButton: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
   },
   content: {
-    padding: Spacing.md,
+    padding: Spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
@@ -395,13 +535,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   price: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.primary,
   },
   statusBadge: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 6,
     borderRadius: 6,
   },
   statusText: {
@@ -418,24 +558,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: Spacing.lg,
+    gap: 16,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: Spacing.lg,
-    marginBottom: Spacing.xs,
   },
   detailText: {
     marginLeft: Spacing.xs,
     color: Colors.textSecondary,
     fontSize: 14,
+    fontWeight: '500',
   },
   section: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -444,92 +584,92 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 24,
   },
-  sellerCard: {
+  detailsContainer: {
     backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sellerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sellerAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   sellerInfo: {
-    marginBottom: Spacing.md,
+    marginLeft: Spacing.md,
+    flex: 1,
   },
   sellerName: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-  },
-  sellerLocation: {
-    fontSize: 14,
-    color: Colors.textSecondary,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   categoryBadge: {
-    backgroundColor: Colors.primary + '20',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 6,
     borderRadius: 6,
   },
   categoryText: {
-    color: Colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   subcategoryBadge: {
-    backgroundColor: Colors.info + '20',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 6,
     borderRadius: 6,
-    marginLeft: Spacing.xs,
   },
   subcategoryText: {
-    color: Colors.info,
     fontSize: 14,
     fontWeight: '600',
   },
-  safetyAlertContainer: {
+  safetyAlertBox: {
+    borderWidth: 1,
+    borderColor: '#FFD1D1',
     borderRadius: 12,
     padding: Spacing.md,
-    marginTop: Spacing.lg,
-    borderWidth: 1,
+    backgroundColor: '#FFF5F5',
+    marginTop: Spacing.sm,
   },
   safetyAlertHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: 8,
+    gap: 8,
   },
   safetyAlertTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#E53E3E',
-    marginLeft: Spacing.sm,
   },
   safetyAlertContent: {
-    gap: 4,
+    gap: 6,
   },
   safetyAlertItem: {
     fontSize: 14,
     color: '#2D3748',
-    lineHeight: 20,
-  },
-  safetySection: {
-    backgroundColor: Colors.warning + '10',
-    borderRadius: 12,
-    padding: Spacing.md,
-    marginTop: Spacing.lg,
-  },
-  safetyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  safetyText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
     lineHeight: 20,
   },
   contactActions: {
@@ -542,15 +682,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+    zIndex: 10,
   },
   contactButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.md,
+    paddingVertical: 14,
     borderRadius: 12,
     marginHorizontal: Spacing.xs,
+    gap: 8,
   },
   callButton: {
     backgroundColor: Colors.primary,
@@ -559,10 +701,94 @@ const styles = StyleSheet.create({
     backgroundColor: '#25D366',
   },
   contactButtonText: {
-    color: Colors.background,
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: Spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)', // Extremely see-through
+    justifyContent: 'center',
+  },
+  modalGradientTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
+  },
+  modalGradientBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 150,
+    zIndex: 5,
+  },
+  closeModalButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 10,
+  },
+  zoomContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImageContainer: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.8,
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalMinimalFooter: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#1C1C1E',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignSelf: 'center',
+    width: '80%', // Even slimmer
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  modalMinimalTitle: {
+    color: '#FFF',
+    fontSize: 14, // Smaller
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  modalMinimalPrice: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12, // Smaller
+  },
+  notFound: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  notFoundText: {
+    fontSize: 18,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   notFoundButton: {
     backgroundColor: Colors.primary,
@@ -572,7 +798,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   notFoundButtonText: {
-    color: Colors.background,
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
   },
