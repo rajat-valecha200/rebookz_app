@@ -43,6 +43,8 @@ interface AuthContextType {
   googleLogin: () => Promise<void>;
   appleLogin: () => Promise<void>;
   dummyLogin: () => Promise<void>;
+  showDummyLogin: boolean;
+  refreshConfig: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,12 +93,14 @@ async function registerForPushNotificationsAsync() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDummyLogin, setShowDummyLogin] = useState(true);
   const router = useRouter();
 
   const isAuthenticated = !!user?.id && !!(user as any).token;
 
   useEffect(() => {
     checkLoginStatus();
+    refreshConfig();
     GoogleSignin.configure({
       webClientId: '423734366253-7haha9kbuf58qql0rlf146lpr0cuikrt.apps.googleusercontent.com',
       offlineAccess: true,
@@ -280,6 +284,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace('/(tabs)/home');
   };
 
+  const refreshConfig = async () => {
+    try {
+      const { data } = await api.get('/admin/config');
+      const configData = data as { [key: string]: any };
+      if (configData && configData.showDummyLogin !== undefined) {
+        setShowDummyLogin(configData.showDummyLogin);
+      }
+    } catch (e) {
+      console.error("Error refreshing config", e);
+    }
+  };
+
   const dummyLogin = async () => {
     setIsLoading(true);
     try {
@@ -298,7 +314,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, sendOtp, verifyOtp, updateProfile, logout, skipLogin, googleLogin, appleLogin, dummyLogin }}>
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isLoading,
+      sendOtp,
+      verifyOtp,
+      updateProfile,
+      logout,
+      skipLogin,
+      googleLogin,
+      appleLogin,
+      dummyLogin,
+      showDummyLogin,
+      refreshConfig
+    }}>
       {children}
     </AuthContext.Provider>
   );

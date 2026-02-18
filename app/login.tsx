@@ -20,7 +20,9 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
-  const { googleLogin, appleLogin, dummyLogin } = useAuth();
+  const [tapCount, setTapCount] = useState(0);
+  const [forceShowDemo, setForceShowDemo] = useState(false);
+  const { googleLogin, appleLogin, dummyLogin, showDummyLogin } = useAuth();
 
   const handleSkip = () => {
     router.replace('/(tabs)/home');
@@ -59,6 +61,17 @@ export default function LoginScreen() {
     }
   };
 
+  const handleLogoPress = () => {
+    setTapCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        setForceShowDemo(true);
+        return 0;
+      }
+      return newCount;
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.keyboardView}>
@@ -77,13 +90,17 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.iconContainer}>
+          <TouchableOpacity
+            style={styles.iconContainer}
+            onPress={handleLogoPress}
+            activeOpacity={1}
+          >
             <Image
               source={require('../assets/images/logo-vertical.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
-          </View>
+          </TouchableOpacity>
 
           <Text style={styles.subtitle}>
             Join the community of book lovers. Buy, sell, swap or donate books nearby.
@@ -116,14 +133,16 @@ export default function LoginScreen() {
               />
             )}
 
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: '#f0f0f0', marginTop: 12, borderWidth: 0 }]}
-              onPress={handleDummyLogin}
-              disabled={loading}
-            >
-              <Ionicons name="person" size={20} color={Colors.primary} style={{ marginRight: 12 }} />
-              <Text style={[styles.socialButtonText, { color: Colors.primary }]}>Continue as Demo User</Text>
-            </TouchableOpacity>
+            {(showDummyLogin || forceShowDemo) && (
+              <TouchableOpacity
+                style={[styles.socialButton, { backgroundColor: '#f0f0f0', marginTop: 12, borderWidth: 0 }]}
+                onPress={handleDummyLogin}
+                disabled={loading}
+              >
+                <Ionicons name="person" size={20} color={Colors.primary} style={{ marginRight: 12 }} />
+                <Text style={[styles.socialButtonText, { color: Colors.primary }]}>Continue as Demo User</Text>
+              </TouchableOpacity>
+            )}
 
             <View style={styles.demoNote}>
               <Ionicons name="shield-checkmark" size={16} color={Colors.success} />
