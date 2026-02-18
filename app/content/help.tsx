@@ -42,7 +42,7 @@ const AccordionItem = ({ item, colors }: { item: { question: string, answer: str
 
 export default function HelpScreen() {
     const { colors } = useTheme();
-    const handleEmail = () => Linking.openURL('mailto:support@rebookz.com');
+    const handleEmail = () => Linking.openURL('mailto:info.rebookz@gmail.com');
     const handlePhone = () => Linking.openURL('tel:+966501234567');
 
     return (
@@ -70,7 +70,7 @@ export default function HelpScreen() {
                         </View>
                         <View>
                             <Text style={[styles.contactLabel, { color: colors.textSecondary }]}>Email Support</Text>
-                            <Text style={[styles.contactValue, { color: colors.textPrimary }]}>support@rebookz.com</Text>
+                            <Text style={[styles.contactValue, { color: colors.textPrimary }]}>info.rebookz@gmail.com</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
