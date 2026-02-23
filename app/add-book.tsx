@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,7 +29,7 @@ import { BookType, BookCondition } from '../types/Book';
 import { useTheme } from '../context/ThemeContext';
 
 export default function AddBookScreen() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateProfile } = useAuth();
   const { location } = useLocation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -54,20 +55,34 @@ export default function AddBookScreen() {
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
 
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [tempPhone, setTempPhone] = useState('');
+  const [savingPhone, setSavingPhone] = useState(false);
+
   useEffect(() => {
-    // Enforce profile completion before listing
+    // Show contextual modal instead of Alert redirect
     if (isAuthenticated && user && !user.phone) {
-      Alert.alert(
-        'Profile Incomplete',
-        'Please complete your profile (name, phone, etc.) before listing a book.',
-        [
-          { text: 'Later', onPress: () => router.back() },
-          { text: 'Complete Profile', onPress: () => router.push('/complete-profile') }
-        ]
-      );
+      setShowPhoneModal(true);
     }
     loadCategories();
   }, [isAuthenticated, user]);
+
+  const handleSavePhone = async () => {
+    if (!tempPhone.trim() || tempPhone.length < 9) {
+      Alert.alert('Invalid Number', 'Please enter a valid mobile number including country code (e.g. 966551234567)');
+      return;
+    }
+
+    setSavingPhone(true);
+    try {
+      await updateProfile({ phone: tempPhone });
+      setShowPhoneModal(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save phone number. Please try again.');
+    } finally {
+      setSavingPhone(false);
+    }
+  };
 
   const loadCategories = async () => {
     const mainCats = await categoryService.getMainCategories();
@@ -574,6 +589,64 @@ export default function AddBookScreen() {
             )}
           </TouchableOpacity>
         </View>
+        {/* Phone Verification Modal */}
+        <Modal
+          visible={showPhoneModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => router.back()}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+              <View style={styles.modalIconContainer}>
+                <Ionicons name="call" size={40} color={Colors.primary} />
+              </View>
+
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Mobile Number Required</Text>
+              <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                To list a book, you must provide a mobile number for buyers to contact you via <Text style={{ fontWeight: 'bold' }}>WhatsApp</Text> or <Text style={{ fontWeight: 'bold' }}>Phone Call</Text>.
+              </Text>
+
+              <View style={styles.phoneInputBox}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Mobile Number</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
+                  placeholder="e.g. 966 55 123 4567"
+                  placeholderTextColor={colors.textSecondary}
+                  value={tempPhone}
+                  onChangeText={setTempPhone}
+                  keyboardType="phone-pad"
+                  autoFocus
+                />
+                <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
+                  Include country code for WhatsApp (e.g. 966...)
+                </Text>
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalCancelButton]}
+                  onPress={() => router.back()}
+                  disabled={savingPhone}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>Not Now</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalSaveButton, { backgroundColor: Colors.primary }]}
+                  onPress={handleSavePhone}
+                  disabled={savingPhone || !tempPhone}
+                >
+                  {savingPhone ? (
+                    <ActivityIndicator color={Colors.background} />
+                  ) : (
+                    <Text style={[styles.modalButtonText, { color: Colors.background }]}>Start Listing</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -827,8 +900,77 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 16,
-    color: Colors.background,
     fontWeight: '600',
+    color: Colors.background,
     marginLeft: Spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: 24,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(57, 102, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  modalDescription: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
+  phoneInputBox: {
+    width: '100%',
+    marginBottom: Spacing.xl,
+  },
+  inputHint: {
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    marginRight: Spacing.sm,
+  },
+  modalSaveButton: {
+    marginLeft: Spacing.sm,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

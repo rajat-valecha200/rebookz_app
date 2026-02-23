@@ -85,11 +85,11 @@ export default function RequestsScreen() {
     };
 
     const filteredRequests = activeTab === 'all'
-        ? requests.filter((r: Request) => r.user._id !== (currentUser?.id || currentUser?._id))
-        : requests.filter((r: Request) => r.user._id === (currentUser?.id || currentUser?._id));
+        ? requests.filter((r: Request) => r.user?._id !== (currentUser?.id || currentUser?._id))
+        : requests.filter((r: Request) => r.user?._id === (currentUser?.id || currentUser?._id));
 
     const renderItem = ({ item }: { item: Request }) => {
-        const isMyRequest = currentUser && (item.user._id === currentUser.id || item.user._id === currentUser._id);
+        const isMyRequest = currentUser && (item.user?._id === currentUser.id || item.user?._id === currentUser._id);
 
         return (
             <TouchableOpacity
@@ -104,10 +104,10 @@ export default function RequestsScreen() {
                 <View style={styles.cardHeader}>
                     <View style={styles.userInfo}>
                         <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-                            <Text style={[styles.avatarText, textSecondaryStyle]}>{item.user.name?.charAt(0) || '?'}</Text>
+                            <Text style={[styles.avatarText, textSecondaryStyle]}>{item.user?.name?.charAt(0) || '?'}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.userName, textPrimaryStyle]}>{item.user.name}</Text>
+                            <Text style={[styles.userName, textPrimaryStyle]}>{item.user?.name || 'Deleted User'}</Text>
                             <Text style={[styles.date, textSecondaryStyle]}>{new Date(item.createdAt).toLocaleDateString()}</Text>
                         </View>
                     </View>

@@ -123,16 +123,16 @@ export default function RequestDetailsScreen() {
                     <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Requested By</Text>
                     <View style={[styles.userCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                         <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-                            {request.user.profileImage ? (
+                            {request.user?.profileImage ? (
                                 <Image source={{ uri: request.user.profileImage }} style={styles.avatarImage} />
                             ) : (
                                 <Text style={[styles.avatarText, { color: colors.textSecondary }]}>
-                                    {request.user.name.charAt(0)}
+                                    {request.user?.name?.charAt(0) || '?'}
                                 </Text>
                             )}
                         </View>
                         <View style={styles.userInfo}>
-                            <Text style={[styles.userName, { color: colors.textPrimary }]}>{request.user.name}</Text>
+                            <Text style={[styles.userName, { color: colors.textPrimary }]}>{request.user?.name || 'Unknown User'}</Text>
                             <Text style={[styles.userMeta, { color: colors.textSecondary }]}>Community Member</Text>
                         </View>
                     </View>
@@ -154,15 +154,15 @@ export default function RequestDetailsScreen() {
 
             {/* Actions */}
             <View style={[styles.footer, { paddingBottom: insets.bottom || 20, borderTopColor: colors.border, backgroundColor: colors.background }]}>
-                {request.user.phone ? (
+                {request.user?.phone ? (
                     <TouchableOpacity
                         style={[styles.contactButton, { backgroundColor: colors.primary }]}
                         onPress={() => {
                             // Assuming we want to WhatsApp or Call
                             Alert.alert('Contact Option', 'Choose how to contact the buyer:', [
                                 { text: 'Cancel', style: 'cancel' },
-                                { text: 'Call', onPress: () => Linking.openURL(`tel:${request.user.phone}`) },
-                                { text: 'WhatsApp', onPress: () => Linking.openURL(`whatsapp://send?phone=${request.user.phone}`) }
+                                { text: 'Call', onPress: () => Linking.openURL(`tel:${request.user?.phone}`) },
+                                { text: 'WhatsApp', onPress: () => Linking.openURL(`whatsapp://send?phone=${request.user?.phone}`) }
                             ]);
                         }}
                     >

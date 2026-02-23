@@ -33,21 +33,22 @@ export default function CompleteProfileScreen() {
     const [loading, setLoading] = useState(false);
 
     const handleUpdate = async () => {
-        if (!name.trim() || !email.trim() || !age.trim()) {
-            Alert.alert('Required', 'Please fill all fields');
+        if (!name.trim()) {
+            Alert.alert('Required', 'Please enter your full name');
             return;
         }
 
         setLoading(true);
+        const updateData: any = { name };
+
+        // Only include email if it exists
+        if (email) updateData.email = email;
+
+        // Omit age, gender, dob, phone since they are not in this form anymore
+        // This prevents sending NaN or undefined to the backend
+
         try {
-            await updateProfile({
-                name,
-                email,
-                phone,
-                age: parseInt(age),
-                gender,
-                dob: dob?.toISOString()
-            });
+            await updateProfile(updateData);
 
             if (router.canGoBack()) {
                 // Ensure auth state is updated before going back
@@ -106,96 +107,15 @@ export default function CompleteProfileScreen() {
                 <View style={styles.inputGroup}>
                     <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
                     <TextInput
-                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
+                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary, opacity: 0.7 }]}
                         value={email}
                         onChangeText={setEmail}
                         placeholder="Enter your email"
                         placeholderTextColor={colors.textSecondary}
                         keyboardType="email-address"
                         autoCapitalize="none"
-                        editable={false} // Locked for safety, email is the source of truth
+                        editable={false}
                     />
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
-                    <Text style={styles.inputHint}>Include country code without '+' (e.g. 966551234567)</Text>
-                    <View style={[styles.phoneInputContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <TextInput
-                            style={[styles.phoneInput, { color: colors.textPrimary }]}
-                            value={phone}
-                            onChangeText={setPhone}
-                            placeholder="966 55 123 4567"
-                            placeholderTextColor={colors.textSecondary}
-                            keyboardType="phone-pad"
-                            maxLength={15}
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.row}>
-                    <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                        <Text style={[styles.label, { color: colors.textSecondary }]}>Date of Birth</Text>
-                        <TouchableOpacity
-                            style={[styles.dateInput, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                            onPress={() => setShowDatePicker(true)}
-                        >
-                            <Text style={{ color: dob ? colors.textPrimary : colors.textSecondary }}>
-                                {dob ? dob.toISOString().split('T')[0] : 'Select Date'}
-                            </Text>
-                            <Ionicons name="calendar" size={20} color={colors.textSecondary} />
-                        </TouchableOpacity>
-
-                        {(showDatePicker || (Platform.OS === 'ios' && showDatePicker)) && (
-                            <RNDateTimePicker
-                                value={dob || new Date()}
-                                mode="date"
-                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                onChange={onDateChange}
-                                maximumDate={new Date()}
-                            />
-                        )}
-
-                        {/* iOS Modal for DatePicker if needed, or inline logic provided above handles it roughly */}
-                        {Platform.OS === 'ios' && showDatePicker && (
-                            <TouchableOpacity
-                                onPress={() => setShowDatePicker(false)}
-                                style={{ alignItems: 'flex-end', marginTop: 4 }}
-                            >
-                                <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    <View style={[styles.inputGroup, { width: 100 }]}>
-                        <Text style={[styles.label, { color: colors.textSecondary }]}>Age</Text>
-                        <TextInput
-                            style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
-                            value={age}
-                            onChangeText={setAge}
-                            placeholder="Age"
-                            placeholderTextColor={colors.textSecondary}
-                            keyboardType="number-pad"
-                            editable={false} // Make read-only as it's calculated
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Gender</Text>
-                    <View style={[styles.pickerContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <Picker
-                            selectedValue={gender}
-                            onValueChange={(itemValue) => setGender(itemValue)}
-                            style={[styles.picker, { color: colors.textPrimary }]}
-                            dropdownIconColor={colors.textSecondary}
-                        >
-                            <Picker.Item label="Select Gender" value="" />
-                            <Picker.Item label="Male" value="male" />
-                            <Picker.Item label="Female" value="female" />
-                            <Picker.Item label="Other" value="other" />
-                        </Picker>
-                    </View>
                 </View>
 
                 <TouchableOpacity
@@ -315,5 +235,11 @@ const styles = StyleSheet.create({
         marginTop: -4,
         marginBottom: 8,
         fontWeight: '500',
+    },
+    infoNote: {
+        fontSize: 11,
+        color: Colors.textSecondary,
+        marginTop: 4,
+        fontStyle: 'italic',
     },
 });

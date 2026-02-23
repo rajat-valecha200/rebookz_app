@@ -127,6 +127,26 @@ export default function BookDetailsScreen() {
   }, [id, user, isAuthenticated, location]);
 
   const handleCallSeller = () => {
+    if (!isAuthenticated) {
+      Alert.alert('Login Required', 'Please login to contact seller', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Login', onPress: () => router.push('/login') }
+      ]);
+      return;
+    }
+
+    if (!user?.phone) {
+      Alert.alert(
+        'Phone Number Required',
+        'To call the seller, please add your phone number to your profile first.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Complete Profile', onPress: () => router.push('/complete-profile') }
+        ]
+      );
+      return;
+    }
+
     Linking.openURL(`tel:${book?.sellerPhone}`).catch(err =>
       Alert.alert('Error', 'Could not make call')
     );
@@ -138,6 +158,18 @@ export default function BookDetailsScreen() {
         { text: 'Cancel', style: 'cancel' },
         { text: 'Login', onPress: () => router.push('/login') }
       ]);
+      return;
+    }
+
+    if (!user?.phone) {
+      Alert.alert(
+        'Phone Number Required',
+        'To contact the seller via WhatsApp, please add your phone number to your profile first.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Complete Profile', onPress: () => router.push('/complete-profile') }
+        ]
+      );
       return;
     }
 

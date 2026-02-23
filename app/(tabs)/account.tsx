@@ -213,13 +213,13 @@ export default function AccountScreen() {
                 style={[styles.modalInput, inputStyle]}
                 value={editName}
                 onChangeText={setEditName}
-                placeholder="Your Name"
+                placeholder="Enter your name"
                 placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, textSecondaryStyle]}>Email (Locked)</Text>
+              <Text style={[styles.inputLabel, textSecondaryStyle]}>Email Address (Read-only)</Text>
               <TextInput
                 style={[styles.modalInput, inputStyle, { opacity: 0.6 }]}
                 value={editEmail}
@@ -231,7 +231,7 @@ export default function AccountScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={[styles.inputLabel, textSecondaryStyle]}>Phone Number (WhatsApp)</Text>
-              <Text style={styles.inputHint}>Include country code without '+' (e.g. 966551234567)</Text>
+              <Text style={styles.inputHint}>Include country code (e.g. 966551234567)</Text>
               <TextInput
                 style={[styles.modalInput, inputStyle]}
                 value={editPhone}
@@ -240,63 +240,7 @@ export default function AccountScreen() {
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
               />
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: Spacing.sm }]}>
-                <Text style={[styles.inputLabel, textSecondaryStyle]}>Birth Date</Text>
-                <TouchableOpacity
-                  style={[styles.modalInput, inputStyle, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text style={{ color: editDob ? colors.textPrimary : colors.textSecondary }}>
-                    {editDob ? editDob.toISOString().split('T')[0] : 'Select Date'}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-
-                {showDatePicker && (
-                  <RNDateTimePicker
-                    value={editDob || new Date()}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={onDateChange}
-                    maximumDate={new Date()}
-                  />
-                )}
-                {Platform.OS === 'ios' && showDatePicker && (
-                  <TouchableOpacity
-                    onPress={() => setShowDatePicker(false)}
-                    style={{ alignItems: 'flex-end', marginTop: 4 }}
-                  >
-                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Done</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: Spacing.sm }]}>
-                <Text style={[styles.inputLabel, textSecondaryStyle]}>Gender</Text>
-                <View style={[styles.genderContainer]}>
-                  {['male', 'female', 'other'].map((g) => (
-                    <TouchableOpacity
-                      key={g}
-                      style={[
-                        styles.genderButton,
-                        { borderColor: colors.border, backgroundColor: colors.surface },
-                        editGender === g && { backgroundColor: colors.primary, borderColor: colors.primary }
-                      ]}
-                      onPress={() => setEditGender(g)}
-                    >
-                      <Text style={[
-                        styles.genderButtonText,
-                        { color: colors.textPrimary },
-                        editGender === g && { color: colors.background }
-                      ]}>
-                        {g.charAt(0).toUpperCase() + g.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
+              <Text style={[styles.infoNote, { marginTop: 4 }]}>* Required for buyers to contact you via WhatsApp.</Text>
             </View>
           </ScrollView>
 

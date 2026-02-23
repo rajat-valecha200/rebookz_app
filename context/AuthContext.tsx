@@ -304,7 +304,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = { ...userData, id: userData._id };
       setUser(user);
       await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
-      router.replace('/(tabs)/home');
+      
+      if (userData.isNewUser) {
+        router.replace('/complete-profile');
+      } else {
+        router.replace('/(tabs)/home');
+      }
     } catch (e) {
       console.error("Dummy login error", e);
       throw e;
