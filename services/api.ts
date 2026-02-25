@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-export const SERVER_URL = 'https://api.rebookz.com/api';
+export const SERVER_URL = 'https://api.rebookz.com';
 export const API_URL = `${SERVER_URL}/api`;
 export const WEB_URL = 'https://rebookz.com';
 
