@@ -45,6 +45,7 @@ interface AuthContextType {
   dummyLogin: () => Promise<void>;
   showDummyLogin: boolean;
   refreshConfig: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -280,6 +281,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   };
 
+  const deleteAccount = async () => {
+    try {
+      await api.delete('/users/profile');
+      await logout();
+    } catch (error) {
+      console.error('Delete Account Error', error);
+      throw error;
+    }
+  };
+
   const skipLogin = () => {
     router.replace('/(tabs)/home');
   };
@@ -304,7 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = { ...userData, id: userData._id };
       setUser(user);
       await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
-      
+
       if (userData.isNewUser) {
         router.replace('/complete-profile');
       } else {
@@ -332,7 +343,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       appleLogin,
       dummyLogin,
       showDummyLogin,
-      refreshConfig
+      refreshConfig,
+      deleteAccount
     }}>
       {children}
     </AuthContext.Provider>

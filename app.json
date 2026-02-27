@@ -13,7 +13,9 @@
       "bundleIdentifier": "com.rebookz.app",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "ReBookz needs access to your camera to take photos of the books you want to list for sale.",
+        "NSPhotoLibraryUsageDescription": "ReBookz needs access to your photo library to upload images of the books you want to list for sale."
       }
     },
     "android": {
@@ -51,7 +53,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "ReBookz uses your location to show you books available for sale in your area and to automatically set your city when you list a book for sale."
         }
       ],
       "expo-notifications",

@@ -26,7 +26,7 @@ import { bookService } from '../../services/bookService';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function AccountScreen() {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, deleteAccount } = useAuth();
   const { theme, toggleTheme, colors } = useTheme();
 
   // Dynamic Styles
@@ -139,9 +139,16 @@ export default function AccountScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Account Deleted', 'Your account has been deleted (demo)');
-            logout();
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await deleteAccount();
+              Alert.alert('Account Deleted', 'Your account and data have been permanently removed.');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete account. Please try again.');
+            } finally {
+              setLoading(false);
+            }
           }
         },
       ]
@@ -635,6 +642,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     marginBottom: Spacing.xs,
+  },
+  infoNote: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
   },
   appCopyright: {
     fontSize: 12,
