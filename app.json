@@ -15,7 +15,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "ReBookz needs access to your camera to take photos of the books you want to list for sale.",
-        "NSPhotoLibraryUsageDescription": "ReBookz needs access to your photo library to upload images of the books you want to list for sale."
+        "NSPhotoLibraryUsageDescription": "ReBookz needs access to your photo library to upload images of the books you want to list for sale.",
+        "NSLocationWhenInUseUsageDescription": "ReBookz uses your location to show you books available for sale in your area (e.g., within 5km of your current spot) and to automatically set your city when you list a book for sale.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "ReBookz uses your location to show you books available for sale in your area (e.g., within 5km of your current spot) and to automatically set your city when you list a book for sale."
       }
     },
     "android": {
@@ -53,7 +55,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "ReBookz uses your location to show you books available for sale in your area and to automatically set your city when you list a book for sale."
+          "locationAlwaysAndWhenInUsePermission": "ReBookz uses your location to show you books available for sale in your area (e.g., within 5km of your current spot) and to automatically set your city when you list a book for sale."
         }
       ],
       "expo-notifications",

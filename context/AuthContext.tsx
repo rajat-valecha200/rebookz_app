@@ -157,7 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(user);
         await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
 
-        if (userData.isNewUser) {
+        const hasRealName = userData.name && userData.name !== 'New User' && userData.name !== 'Apple User' && userData.name !== 'Demo User';
+        if (userData.isNewUser && !hasRealName) {
           router.replace('/complete-profile');
         } else {
           router.replace('/(tabs)/home');
@@ -201,7 +202,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(user);
         await SecureStore.setItemAsync('userInfo', JSON.stringify(user));
 
-        if (userData.isNewUser) {
+        const hasRealName = userData.name && userData.name !== 'New User' && userData.name !== 'Apple User' && userData.name !== 'Demo User';
+        if (userData.isNewUser && !hasRealName) {
           router.replace('/complete-profile');
         } else {
           router.replace('/(tabs)/home');
