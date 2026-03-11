@@ -8,7 +8,9 @@ import {
     ScrollView,
     Alert,
     Platform,
-    Modal
+    Modal,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -84,48 +86,54 @@ export default function CompleteProfileScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { color: colors.textPrimary }]}>Complete Profile</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flex: 1 }}>
+                    <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+                        </TouchableOpacity>
+                        <Text style={[styles.title, { color: colors.textPrimary }]}>Complete Profile</Text>
+                        <View style={{ width: 40 }} />
+                    </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.inputGroup}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
-                    <TextInput
-                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Enter your name"
-                        placeholderTextColor={colors.textSecondary}
-                    />
+                    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>Full Name</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
+                                value={name}
+                                onChangeText={setName}
+                                placeholder="Enter your name"
+                                placeholderTextColor={colors.textSecondary}
+                                returnKeyType="done"
+                                onSubmitEditing={Keyboard.dismiss}
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
+                            <TextInput
+                                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary, opacity: 0.7 }]}
+                                value={email}
+                                onChangeText={setEmail}
+                                placeholder="Enter your email"
+                                placeholderTextColor={colors.textSecondary}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                editable={false}
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+                            onPress={handleUpdate}
+                            disabled={loading}
+                        >
+                            <Text style={[styles.saveText, { color: colors.background }]}>{loading ? 'Saving...' : 'Finish Setup'}</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
                 </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Email Address</Text>
-                    <TextInput
-                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary, opacity: 0.7 }]}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="Enter your email"
-                        placeholderTextColor={colors.textSecondary}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        editable={false}
-                    />
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.saveButton, { backgroundColor: colors.primary }]}
-                    onPress={handleUpdate}
-                    disabled={loading}
-                >
-                    <Text style={[styles.saveText, { color: colors.background }]}>{loading ? 'Saving...' : 'Finish Setup'}</Text>
-                </TouchableOpacity>
-            </ScrollView>
+            </TouchableWithoutFeedback>
         </SafeAreaView>
     );
 }

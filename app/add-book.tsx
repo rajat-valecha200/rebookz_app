@@ -12,6 +12,8 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -596,56 +598,68 @@ export default function AddBookScreen() {
           animationType="fade"
           onRequestClose={() => router.back()}
         >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <View style={styles.modalIconContainer}>
-                <Ionicons name="call" size={40} color={Colors.primary} />
-              </View>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ width: '100%', alignItems: 'center' }}
+              >
+                <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                  <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                    <View style={styles.modalIconContainer}>
+                      <Ionicons name="call" size={40} color={Colors.primary} />
+                    </View>
 
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Mobile Number Required</Text>
-              <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
-                To list a book, you must provide a mobile number for buyers to contact you via <Text style={{ fontWeight: 'bold' }}>WhatsApp</Text> or <Text style={{ fontWeight: 'bold' }}>Phone Call</Text>.
-              </Text>
+                    <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Mobile Number Required</Text>
+                    <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                      To list a book, you must provide a mobile number for buyers to contact you via <Text style={{ fontWeight: 'bold' }}>WhatsApp</Text> or <Text style={{ fontWeight: 'bold' }}>Phone Call</Text>.
+                    </Text>
 
-              <View style={styles.phoneInputBox}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Mobile Number</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="e.g. 966 55 123 4567"
-                  placeholderTextColor={colors.textSecondary}
-                  value={tempPhone}
-                  onChangeText={setTempPhone}
-                  keyboardType="phone-pad"
-                  autoFocus
-                />
-                <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
-                  Include country code for WhatsApp (e.g. 966...)
-                </Text>
-              </View>
+                    <View style={styles.phoneInputBox}>
+                      <Text style={[styles.label, { color: colors.textPrimary }]}>Mobile Number</Text>
+                      <TextInput
+                        style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
+                        placeholder="e.g. 966 55 123 4567"
+                        placeholderTextColor={colors.textSecondary}
+                        value={tempPhone}
+                        onChangeText={setTempPhone}
+                        keyboardType="phone-pad"
+                        autoFocus
+                        returnKeyType="done"
+                        onSubmitEditing={handleSavePhone}
+                        blurOnSubmit={true}
+                      />
+                      <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
+                        Include country code for WhatsApp (e.g. 966...)
+                      </Text>
+                    </View>
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={() => router.back()}
-                  disabled={savingPhone}
-                >
-                  <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>Not Now</Text>
-                </TouchableOpacity>
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={[styles.modalButton, styles.modalCancelButton]}
+                        onPress={() => router.back()}
+                        disabled={savingPhone}
+                      >
+                        <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>Not Now</Text>
+                      </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalSaveButton, { backgroundColor: Colors.primary }]}
-                  onPress={handleSavePhone}
-                  disabled={savingPhone || !tempPhone}
-                >
-                  {savingPhone ? (
-                    <ActivityIndicator color={Colors.background} />
-                  ) : (
-                    <Text style={[styles.modalButtonText, { color: Colors.background }]}>Start Listing</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+                      <TouchableOpacity
+                        style={[styles.modalButton, styles.modalSaveButton, { backgroundColor: Colors.primary }]}
+                        onPress={handleSavePhone}
+                        disabled={savingPhone || !tempPhone}
+                      >
+                        {savingPhone ? (
+                          <ActivityIndicator color={Colors.background} />
+                        ) : (
+                          <Text style={[styles.modalButtonText, { color: Colors.background }]}>Start Listing</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </KeyboardAvoidingView>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
