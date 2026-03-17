@@ -84,6 +84,25 @@ export default function RequestsScreen() {
         );
     };
 
+    const handleAddRequest = () => {
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+        if (!currentUser.phone) {
+            Alert.alert(
+                'Phone Number Required',
+                'Please update your profile with a valid phone number to create a book request.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: "Let's do it", onPress: () => router.push('/complete-profile') }
+                ]
+            );
+            return;
+        }
+        router.push('/request-book');
+    };
+
     const filteredRequests = activeTab === 'all'
         ? requests.filter((r: Request) => r.user?._id !== (currentUser?.id || currentUser?._id))
         : requests.filter((r: Request) => r.user?._id === (currentUser?.id || currentUser?._id));
@@ -197,7 +216,7 @@ export default function RequestsScreen() {
 
             <TouchableOpacity
                 style={[styles.fab, { backgroundColor: colors.primary }]}
-                onPress={() => router.push('/request-book')}
+                onPress={handleAddRequest}
             >
                 <Ionicons name="add" size={30} color="#fff" />
             </TouchableOpacity>

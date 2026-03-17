@@ -18,6 +18,7 @@ import { Spacing } from '../../constants/spacing';
 import api from '../../services/api';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface Request {
     _id: string;
@@ -30,12 +31,20 @@ interface Request {
         profileImage?: string;
         phone?: string;
     };
+    fulfilledBy?: {
+        _id: string;
+        title: string;
+        images?: string[];
+        sellerId: string;
+    };
+    status?: string;
     createdAt: string;
 }
 
 export default function RequestDetailsScreen() {
     const { id } = useLocalSearchParams();
     const { colors } = useTheme();
+    const { user: currentUser } = useAuth();
     const insets = useSafeAreaInsets();
     const [request, setRequest] = useState<Request | null>(null);
     const [loading, setLoading] = useState(true);
@@ -97,8 +106,12 @@ export default function RequestDetailsScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Request Header */}
                 <View style={[styles.requestHeader, { backgroundColor: colors.surface }]}>
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>WANTED</Text>
+                    <View style={styles.headerTopRow}>
+                        <View style={[styles.badge, request.status === 'fulfilled' && { backgroundColor: colors.success + '20' }]}>
+                            <Text style={[styles.badgeText, request.status === 'fulfilled' && { color: colors.success }]}>
+                                {request.status === 'fulfilled' ? 'FULFILLED' : 'WANTED'}
+                            </Text>
+                        </View>
                     </View>
                     <Text style={[styles.title, { color: colors.textPrimary }]}>{request.title}</Text>
                     <View style={styles.categoryInfo}>
@@ -109,6 +122,24 @@ export default function RequestDetailsScreen() {
                         Posted on {new Date(request.createdAt).toLocaleDateString()}
                     </Text>
                 </View>
+
+                {request.status === 'fulfilled' && request.fulfilledBy && (
+                    <View style={[styles.fulfilledSection, { backgroundColor: colors.success + '15' }]}>
+                        <View style={styles.safetyHeader}>
+                            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                            <Text style={[styles.safetyTitle, { color: colors.success }]}>Request Fulfilled</Text>
+                        </View>
+                        <Text style={[styles.safetyText, { color: colors.textSecondary, marginTop: 4 }]}>
+                            This request was fulfilled by a book: {request.fulfilledBy.title}
+                        </Text>
+                        <TouchableOpacity 
+                            style={[styles.viewBookButton, { backgroundColor: colors.success }]}
+                            onPress={() => router.push(`/book/${request.fulfilledBy?._id}`)}
+                        >
+                            <Text style={styles.viewBookButtonText}>View Fulfilled Book</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 {/* Description */}
                 <View style={styles.section}>
@@ -152,26 +183,43 @@ export default function RequestDetailsScreen() {
                 </View>
             </ScrollView>
 
-            {/* Actions */}
             <View style={[styles.footer, { paddingBottom: insets.bottom || 20, borderTopColor: colors.border, backgroundColor: colors.background }]}>
-                {request.user?.phone ? (
-                    <TouchableOpacity
-                        style={[styles.contactButton, { backgroundColor: colors.primary }]}
-                        onPress={() => {
-                            // Assuming we want to WhatsApp or Call
-                            Alert.alert('Contact Option', 'Choose how to contact the buyer:', [
-                                { text: 'Cancel', style: 'cancel' },
-                                { text: 'Call', onPress: () => Linking.openURL(`tel:${request.user?.phone}`) },
-                                { text: 'WhatsApp', onPress: () => Linking.openURL(`whatsapp://send?phone=${request.user?.phone}`) }
-                            ]);
-                        }}
-                    >
-                        <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
-                        <Text style={styles.contactButtonText}>Contact Buyer</Text>
-                    </TouchableOpacity>
+                {request.status === 'fulfilled' ? (
+                     <View style={[styles.disabledButton, { backgroundColor: colors.border }]}>
+                         <Text style={[styles.disabledButtonText, { color: colors.textSecondary }]}>This request is already fulfilled</Text>
+                     </View>
+                ) : currentUser?.id === request.user._id ? (
+                     <View style={[styles.disabledButton, { backgroundColor: colors.border }]}>
+                         <Text style={[styles.disabledButtonText, { color: colors.textSecondary }]}>This is your request</Text>
+                     </View>
                 ) : (
-                    <View style={[styles.disabledButton, { backgroundColor: colors.border }]}>
-                        <Text style={[styles.disabledButtonText, { color: colors.textSecondary }]}>Contact information not available</Text>
+                    <View style={styles.actionButtonsRow}>
+                        {request.user?.phone ? (
+                            <TouchableOpacity
+                                style={[styles.contactButton, styles.flex1, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary }]}
+                                onPress={() => {
+                                    Alert.alert('Contact Option', 'Choose how to contact the buyer:', [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        { text: 'Call', onPress: () => Linking.openURL(`tel:${request.user?.phone}`) },
+                                        { text: 'WhatsApp', onPress: () => Linking.openURL(`whatsapp://send?phone=${request.user?.phone}`) }
+                                    ]);
+                                }}
+                            >
+                                <Ionicons name="chatbubble-ellipses" size={20} color={colors.primary} />
+                                <Text style={[styles.contactButtonText, { color: colors.primary }]}>Contact</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={[styles.disabledButton, styles.flex1, { backgroundColor: colors.border }]}>
+                                <Text style={[styles.disabledButtonText, { color: colors.textSecondary }]}>No Contact</Text>
+                            </View>
+                        )}
+                        <TouchableOpacity
+                            style={[styles.contactButton, styles.flex1, { backgroundColor: colors.primary }]}
+                            onPress={() => router.push({ pathname: '/add-book', params: { fulfillRequestId: request._id } })}
+                        >
+                            <Ionicons name="bag-check-outline" size={20} color="#fff" />
+                            <Text style={[styles.contactButtonText, { color: '#fff' }]}>Fulfill Request</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
@@ -210,6 +258,12 @@ const styles = StyleSheet.create({
     requestHeader: {
         padding: Spacing.lg,
         paddingTop: Spacing.md,
+        marginBottom: Spacing.md,
+    },
+    headerTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
         marginBottom: Spacing.md,
     },
     badge: {
@@ -292,6 +346,23 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: 2,
     },
+    fulfilledSection: {
+        marginHorizontal: Spacing.lg,
+        padding: Spacing.md,
+        borderRadius: 12,
+        marginBottom: Spacing.lg,
+    },
+    viewBookButton: {
+        marginTop: Spacing.md,
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    viewBookButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
     safetySection: {
         marginHorizontal: Spacing.lg,
         padding: Spacing.md,
@@ -318,6 +389,13 @@ const styles = StyleSheet.create({
         right: 0,
         padding: Spacing.md,
         borderTopWidth: 1,
+    },
+    actionButtonsRow: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+    },
+    flex1: {
+        flex: 1,
     },
     contactButton: {
         flexDirection: 'row',

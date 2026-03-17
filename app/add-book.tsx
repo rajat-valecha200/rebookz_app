@@ -182,8 +182,8 @@ export default function AddBookScreen() {
   // I need to use multi_replace.
   // Wait, I will use replace on specific chunks.
 
-  // 1. Add 'id' to params
-  const { id } = useLocalSearchParams(); // Requires import from expo-router, but it's already imported as 'router' usually? No, update imports.
+  // 1. Add 'id' and 'fulfillRequestId' to params
+  const { id, fulfillRequestId } = useLocalSearchParams();
 
   // 2. Add useEffect for loading book
   useEffect(() => {
@@ -283,6 +283,7 @@ export default function AddBookScreen() {
           isAvailable: true,
           status: 'available',
           distance: 0,
+          fulfillRequestId: fulfillRequestId ? (fulfillRequestId as string) : undefined,
         });
         Alert.alert('Success', 'Book listed!', [{ text: 'OK', onPress: () => router.back() }]);
       }
