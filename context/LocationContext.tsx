@@ -7,6 +7,7 @@ interface LocationType {
   address: string;
   lat: number;
   lng: number;
+  countryCode?: string | null;
 }
 
 interface LocationContextType {
@@ -21,6 +22,7 @@ const defaultLocation: LocationType = {
   address: "New Delhi, India",
   lat: 28.6139,
   lng: 77.2090,
+  countryCode: "IN"
 };
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -89,10 +91,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         ? `${addressResponse[0].city || ''}, ${addressResponse[0].country || ''}`.trim()
         : `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
       
-      const newLocation = { 
+      const newLocation: LocationType = { 
         address: address || 'Current Location', 
         lat: latitude, 
-        lng: longitude 
+        lng: longitude,
+        countryCode: addressResponse[0]?.isoCountryCode || null
       };
       
       setLocation(newLocation);
@@ -109,8 +112,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateLocation = async (address: string, lat: number, lng: number) => {
-    const newLocation = { address, lat, lng };
+  const updateLocation = async (address: string, lat: number, lng: number, countryCode?: string | null) => {
+    const newLocation: LocationType = { address, lat, lng, countryCode };
     setLocation(newLocation);
     await saveLocation(newLocation);
   };

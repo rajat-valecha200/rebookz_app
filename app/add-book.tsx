@@ -27,6 +27,7 @@ import { categoryService } from '../services/categoryService';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import { BookType, BookCondition } from '../types/Book';
+import { useAppContext } from '../context/AppContext';
 
 import { useTheme } from '../context/ThemeContext';
 
@@ -34,6 +35,7 @@ export default function AddBookScreen() {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const { location } = useLocation();
   const { colors } = useTheme();
+  const { currencySymbol } = useAppContext();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
 
@@ -517,7 +519,7 @@ export default function AddBookScreen() {
 
             {(type === 'sell') && (
               <View style={styles.inputGroup}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Price (SAR) *</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Price ({currencySymbol}) *</Text>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
                   placeholder="Enter price"

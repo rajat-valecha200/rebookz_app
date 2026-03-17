@@ -17,12 +17,14 @@ import { router } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { useAuth } from '../context/AuthContext';
+import { useAppContext } from '../context/AppContext';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [forceShowDemo, setForceShowDemo] = useState(false);
-  const { googleLogin, appleLogin, dummyLogin, showDummyLogin } = useAuth();
+  const { googleLogin, appleLogin, dummyLogin } = useAuth();
+  const { allowDummyLogin } = useAppContext();
 
   const handleSkip = () => {
     router.replace('/(tabs)/home');
@@ -133,7 +135,7 @@ export default function LoginScreen() {
               />
             )}
 
-            {(showDummyLogin || forceShowDemo) && (
+            {(allowDummyLogin || forceShowDemo) && (
               <TouchableOpacity
                 style={[styles.socialButton, { backgroundColor: '#f0f0f0', marginTop: 12, borderWidth: 0 }]}
                 onPress={handleDummyLogin}

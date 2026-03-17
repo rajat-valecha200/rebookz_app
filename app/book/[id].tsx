@@ -33,6 +33,7 @@ import { WEB_URL } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Book } from '../../types/Book';
 import { useTheme } from '../../context/ThemeContext';
+import { useAppContext } from '../../context/AppContext';
 import { useLocation } from '../../context/LocationContext';
 import SafeImage from '../../components/SafeImage';
 import { formatDate } from '../../utils/date';
@@ -42,6 +43,7 @@ export default function BookDetailsScreen() {
   const { user, isAuthenticated } = useAuth();
   const { location } = useLocation();
   const { colors } = useTheme(); // Use Theme Colors
+  const { currencySymbol } = useAppContext();
   const [book, setBook] = useState<Book | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
@@ -174,7 +176,7 @@ export default function BookDetailsScreen() {
     }
 
     const bookUrl = `https://rebookz.com/book/${book?.id}`;
-    const message = `🔒 ReBookz Safety Guidelines\n\nNever pay money or hand over products in advance.\n\nDo not scan any QR code or send even 1 SAR to anyone.\n\nNever share your OTP, UPI PIN, or any banking details with anyone.\n\nAlways take necessary precautions when meeting buyers or sellers. Meet in safe, public places.\n\nReBookz is not responsible for any fraudulent activities.\n\nYour Book: ${bookUrl} 📚 ♻\n\nHi there,\nI'm interested in your book "${book?.title}" posted on Rebookz App.\n\nIs it available?`;
+    const message = `🔒 ReBookz Safety Guidelines\n\nNever pay money or hand over products in advance.\n\nDo not scan any QR code or send even 1 ${currencySymbol} to anyone.\n\nNever share your OTP, UPI PIN, or any banking details with anyone.\n\nAlways take necessary precautions when meeting buyers or sellers. Meet in safe, public places.\n\nReBookz is not responsible for any fraudulent activities.\n\nYour Book: ${bookUrl} 📚 ♻\n\nHi there,\nI'm interested in your book "${book?.title}" posted on Rebookz App.\n\nIs it available?`;
     const url = `whatsapp://send?phone=${book?.sellerPhone}&text=${encodeURIComponent(message)}`;
 
     Linking.openURL(url).catch(() => {
@@ -282,7 +284,7 @@ export default function BookDetailsScreen() {
           {/* Price and Status */}
           <View style={styles.headerRow}>
             <Text style={[styles.price, { color: colors.primary }]}>
-              {book.type === 'sell' ? `${book.price} SAR` : 'FREE'}
+              {book.type === 'sell' ? `${book.price} ${currencySymbol}` : 'FREE'}
             </Text>
             <View style={[
               styles.statusBadge,

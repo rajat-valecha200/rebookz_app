@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../context/AuthContext';
 import { LocationProvider } from '../context/LocationContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext'; // Import ThemeProvider
+import { AppProvider } from '../context/AppContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -92,9 +93,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <LocationProvider>
-            <ThemeProvider>
-              <AppLayout />
-            </ThemeProvider>
+            <AppProvider>
+              <ThemeProvider>
+                <AppLayout />
+              </ThemeProvider>
+            </AppProvider>
           </LocationProvider>
         </AuthProvider>
       </SafeAreaProvider>

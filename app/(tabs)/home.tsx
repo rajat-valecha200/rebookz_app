@@ -26,6 +26,7 @@ import { Spacing } from '../../constants/spacing';
 import { bookService } from '../../services/bookService';
 import { categoryService } from '../../services/categoryService';
 import { useLocation } from '../../context/LocationContext';
+import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 import { Category } from '../../types/Category';
@@ -92,6 +93,7 @@ import { useTheme } from '../../context/ThemeContext';
 export default function HomeScreen() {
   const { location } = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { currencySymbol } = useAppContext();
   const { colors } = useTheme(); // Use Theme Hook
 
   // Dynamic Styles
@@ -236,7 +238,7 @@ export default function HomeScreen() {
         <Text style={[styles.featuredTitle, textPrimaryStyle]} numberOfLines={2}>{item.title}</Text>
         <View style={styles.featuredBottomRow}>
           <Text style={[styles.featuredPrice, { color: colors.primary }]}>
-            {item.type === 'sell' ? `${item.price} SAR` : 'FREE'}
+            {item.type === 'sell' ? `${item.price} ${currencySymbol}` : 'FREE'}
           </Text>
           <View style={styles.distanceBadge}>
             <Ionicons name="location" size={10} color={colors.textSecondary} />
@@ -456,7 +458,7 @@ export default function HomeScreen() {
                     <Text style={[styles.recentBookTitle, textPrimaryStyle]} numberOfLines={1}>{item.title}</Text>
                     <View style={styles.recentBookBottomRow}>
                       <Text style={[styles.recentBookPrice, { color: colors.primary }]}>
-                        {item.type === 'sell' ? `${item.price} SAR` : 'FREE'}
+                        {item.type === 'sell' ? `${item.price} ${currencySymbol}` : 'FREE'}
                       </Text>
                       <View style={styles.distanceBadgeMini}>
                         <Ionicons name="location" size={10} color={colors.textSecondary} />

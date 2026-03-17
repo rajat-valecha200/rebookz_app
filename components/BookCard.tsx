@@ -15,6 +15,7 @@ import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
 import SafeImage from './SafeImage';
 
 interface BookCardProps {
@@ -36,6 +37,7 @@ export default function BookCard({
 }: BookCardProps) {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { currencySymbol } = useAppContext();
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [showInlineActions, setShowInlineActions] = React.useState(false);
   const isMyBook = user && user.id === book.sellerId;
@@ -219,10 +221,9 @@ export default function BookCard({
             {book.description}
           </Text>
 
-          {/* Price and Condition */}
           <View style={styles.infoRow}>
             {book.type === 'sell' ? (
-              <Text style={[styles.price, { color: colors.primary }]}>{book.price} SAR</Text>
+              <Text style={[styles.price, { color: colors.primary }]}>{book.price} {currencySymbol}</Text>
             ) : (
               <Text style={[styles.priceFree, { color: colors.success }]}>Free</Text>
             )}
