@@ -177,13 +177,22 @@ export default function BookDetailsScreen() {
 
     const bookUrl = `https://rebookz.com/book/${book?.id}`;
     const message = `🔒 ReBookz Safety Guidelines\n\nNever pay money or hand over products in advance.\n\nDo not scan any QR code or send even 1 ${currencySymbol} to anyone.\n\nNever share your OTP, UPI PIN, or any banking details with anyone.\n\nAlways take necessary precautions when meeting buyers or sellers. Meet in safe, public places.\n\nReBookz is not responsible for any fraudulent activities.\n\nYour Book: ${bookUrl} 📚 ♻\n\nHi there,\nI'm interested in your book "${book?.title}" posted on Rebookz App.\n\nIs it available?`;
-    const url = `whatsapp://send?phone=${book?.sellerPhone}&text=${encodeURIComponent(message)}`;
+    
+    // Clean formatted number (remove plus/spaces)
+    const cleanPhone = book?.sellerPhone?.replace(/\D/g, '') || '';
+    const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+    const browserUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 
-    Linking.openURL(url).catch(() => {
-      Alert.alert(
-        'WhatsApp Not Installed',
-        'Please install WhatsApp to contact the seller.'
-      );
+    Linking.canOpenURL(whatsappUrl).then(supported => {
+        if (supported) {
+            Linking.openURL(whatsappUrl);
+        } else {
+            Linking.openURL(browserUrl);
+        }
+    }).catch(() => {
+        Linking.openURL(browserUrl).catch(() => {
+            Alert.alert('Error', 'Could not open WhatsApp');
+        });
     });
   };
 

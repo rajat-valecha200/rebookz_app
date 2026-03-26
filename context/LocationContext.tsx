@@ -14,15 +14,18 @@ interface LocationContextType {
   location: LocationType;
   isLoading: boolean;
   error: string | null;
-  updateLocation: (address: string, lat: number, lng: number) => Promise<void>;
+  isFirstLaunch: boolean;
+  regionChangeTag: number;
+  updateLocation: (address: string, lat: number, lng: number, countryCode?: string | null) => Promise<void>;
   requestPermission: () => Promise<boolean>;
+  completeFirstLaunch: () => Promise<void>;
 }
 
 const defaultLocation: LocationType = {
-  address: "New Delhi, India",
-  lat: 28.6139,
-  lng: 77.2090,
-  countryCode: "IN"
+  address: "Riyadh, Saudi Arabia",
+  lat: 24.7136,
+  lng: 46.6753,
+  countryCode: "SA"
 };
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -31,6 +34,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<LocationType>(defaultLocation);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
+  const [regionChangeTag, setRegionChangeTag] = useState(0);
 
   // Load saved location on mount
   useEffect(() => {
@@ -40,12 +45,27 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const loadSavedLocation = async () => {
     try {
       const savedLocation = await AsyncStorage.getItem('@user_location');
+      const hasLaunched = await AsyncStorage.getItem('@has_launched');
+      
       if (savedLocation) {
         const parsedLocation = JSON.parse(savedLocation);
         setLocation(parsedLocation);
       }
+      
+      if (!hasLaunched) {
+        setIsFirstLaunch(true);
+      }
     } catch (err) {
       console.error('Error loading saved location:', err);
+    }
+  };
+
+  const completeFirstLaunch = async () => {
+    try {
+      await AsyncStorage.setItem('@has_launched', 'true');
+      setIsFirstLaunch(false);
+    } catch (err) {
+      console.error('Error completing first launch:', err);
     }
   };
 
@@ -114,8 +134,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   const updateLocation = async (address: string, lat: number, lng: number, countryCode?: string | null) => {
     const newLocation: LocationType = { address, lat, lng, countryCode };
+    const oldCode = location.countryCode;
     setLocation(newLocation);
     await saveLocation(newLocation);
+    
+    if (countryCode !== oldCode) {
+      setRegionChangeTag(prev => prev + 1);
+    }
   };
 
   return (
@@ -123,8 +148,11 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       location, 
       isLoading, 
       error, 
+      isFirstLaunch,
+      regionChangeTag,
       updateLocation, 
-      requestPermission 
+      requestPermission,
+      completeFirstLaunch
     }}>
       {children}
     </LocationContext.Provider>

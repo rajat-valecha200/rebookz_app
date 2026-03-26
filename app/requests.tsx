@@ -17,6 +17,7 @@ import api from '../services/api';
 
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useAppContext } from '../context/AppContext';
 
 interface Request {
     _id: string;
@@ -34,6 +35,7 @@ interface Request {
 export default function RequestsScreen() {
     const { colors } = useTheme();
     const { user: currentUser } = useAuth();
+    const { activeRegionCode, regionChangeTag } = useAppContext();
     const [requests, setRequests] = useState<Request[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'all' | 'my'>('all');
@@ -46,12 +48,12 @@ export default function RequestsScreen() {
 
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [regionChangeTag]);
 
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/requests');
+            const { data } = await api.get(`/requests?region=${activeRegionCode}`);
             setRequests(data as any);
         } catch (error) {
             console.error(error);

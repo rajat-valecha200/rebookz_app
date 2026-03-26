@@ -16,9 +16,15 @@ import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { Book } from '../types/Book';
+import { useAppContext } from '../context/AppContext';
+import { useLocation } from '../context/LocationContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SearchScreen() {
   const params = useLocalSearchParams();
+  const { activeRegionCode, regionChangeTag } = useAppContext();
+  const { location } = useLocation();
+  const { colors } = useTheme();
   const [query, setQuery] = useState(params.q?.toString() || '');
   const [results, setResults] = useState<Book[]>([]);
   const [isSearching, setIsSearching] = useState(!!params.q);
@@ -28,7 +34,7 @@ export default function SearchScreen() {
 
     Keyboard.dismiss();
     setIsSearching(true);
-    const searchResults = await bookService.searchBooks(query);
+    const searchResults = await bookService.searchBooks(query, location?.lat, location?.lng, activeRegionCode);
     setResults(searchResults);
   };
 
@@ -40,10 +46,10 @@ export default function SearchScreen() {
 
   // Initial search if query param exists
   React.useEffect(() => {
-    if (params.q) {
+    if (params.q || (query && results.length > 0)) {
       handleSearch();
     }
-  }, []);
+  }, [regionChangeTag]);
 
   return (
     <SafeAreaView style={styles.container}>

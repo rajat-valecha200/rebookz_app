@@ -14,6 +14,7 @@ import BookCard from '../components/BookCard';
 import { bookService } from '../services/bookService';
 import { useLocation } from '../context/LocationContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
 import { Book } from '../types/Book';
 
 export default function FreeBooksScreen() {
@@ -23,10 +24,11 @@ export default function FreeBooksScreen() {
     const [filter, setFilter] = useState<'nearest' | 'latest'>('nearest');
     const { location } = useLocation();
     const { colors } = useTheme();
+    const { activeRegionCode, regionChangeTag } = useAppContext();
 
     useEffect(() => {
         loadFreeBooks();
-    }, []);
+    }, [regionChangeTag]);
 
     useEffect(() => {
         applyFilter();
@@ -35,7 +37,7 @@ export default function FreeBooksScreen() {
     const loadFreeBooks = async () => {
         try {
             setLoading(true);
-            const data = await bookService.getFreeBooks(location?.lat, location?.lng);
+            const data = await bookService.getFreeBooks(location?.lat, location?.lng, activeRegionCode);
             setBooks(data);
         } catch (error) {
             console.error('Error loading free books:', error);

@@ -9,7 +9,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    ScrollView
+    ScrollView,
+    Modal
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,11 +18,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Colors } from '../constants/colors';
 import { Spacing } from '../constants/spacing';
 import api from '../services/api';
-
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { useAppContext } from '../context/AppContext';
 
 export default function RequestBookScreen() {
+    const { user, isAuthenticated, updateProfile } = useAuth();
     const { colors } = useTheme();
+    const { activeRegionCode } = useAppContext();
     const insets = useSafeAreaInsets();
     const params = useLocalSearchParams();
     const requestId = params.id as string;
@@ -31,6 +35,33 @@ export default function RequestBookScreen() {
     const [category, setCategory] = useState('');
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    
+    // Phone verify state
+    const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [tempPhone, setTempPhone] = useState('');
+    const [savingPhone, setSavingPhone] = useState(false);
+
+    useEffect(() => {
+        if (isAuthenticated && user && !user.phone) {
+            setShowPhoneModal(true);
+        }
+    }, [isAuthenticated, user]);
+
+    const handleSavePhone = async () => {
+        if (!tempPhone.trim() || tempPhone.length < 9) {
+            Alert.alert('Invalid Number', 'Please enter a valid mobile number.');
+            return;
+        }
+        setSavingPhone(true);
+        try {
+            await updateProfile({ phone: tempPhone });
+            setShowPhoneModal(false);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to save phone number.');
+        } finally {
+            setSavingPhone(false);
+        }
+    };
 
     useEffect(() => {
         if (requestId) {
@@ -76,7 +107,8 @@ export default function RequestBookScreen() {
                 await api.post('/requests', {
                     title,
                     description,
-                    category
+                    category,
+                    region: activeRegionCode
                 });
                 Alert.alert('Success', 'Book request posted! We will notify you if someone lists it.', [
                     { text: 'OK', onPress: () => router.back() }
@@ -181,6 +213,44 @@ export default function RequestBookScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+            {/* Phone Verification Modal */}
+            <Modal
+                visible={showPhoneModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => router.back()}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                        <Ionicons name="call" size={40} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 15 }} />
+                        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Mobile Number Required</Text>
+                        <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                            To post a request, you must provide a mobile number so sellers can notify you.
+                        </Text>
+                        <TextInput
+                            style={[styles.modalInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.textPrimary }]}
+                            placeholder="e.g. 966 55 123 4567"
+                            placeholderTextColor={colors.textSecondary}
+                            value={tempPhone}
+                            onChangeText={setTempPhone}
+                            keyboardType="phone-pad"
+                        />
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity style={styles.modalCancelButton} onPress={() => router.back()}>
+                                <Text style={{ color: colors.textSecondary }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.modalSaveButton, { backgroundColor: colors.primary }]} 
+                                onPress={handleSavePhone}
+                                disabled={savingPhone}
+                            >
+                                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Save & Continue</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -279,4 +349,49 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+    },
+    modalContent: {
+        width: '100%',
+        padding: 20,
+        borderRadius: 15,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 10
+    },
+    modalDescription: {
+        textAlign: 'center',
+        marginBottom: 20,
+        lineHeight: 20
+    },
+    modalInput: {
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 20,
+        fontSize: 16
+    },
+    modalActions: {
+        flexDirection: 'row',
+        gap: 10
+    },
+    modalCancelButton: {
+        flex: 1,
+        padding: 15,
+        alignItems: 'center'
+    },
+    modalSaveButton: {
+        flex: 2,
+        padding: 15,
+        borderRadius: 8,
+        alignItems: 'center'
+    }
 });

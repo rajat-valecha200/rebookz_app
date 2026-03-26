@@ -93,7 +93,7 @@ import { useTheme } from '../../context/ThemeContext';
 export default function HomeScreen() {
   const { location } = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { currencySymbol } = useAppContext();
+  const { currencySymbol, activeRegionCode, regionChangeTag } = useAppContext();
   const { colors } = useTheme(); // Use Theme Hook
 
   // Dynamic Styles
@@ -125,7 +125,7 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       loadData();
-    }, [])
+    }, [regionChangeTag])
   );
 
   useEffect(() => {
@@ -142,17 +142,17 @@ export default function HomeScreen() {
   const loadData = async () => {
     try {
       const categoriesData = await categoryService.getMainCategories();
-      let nearbyData = await bookService.getNearbyBooks(location?.lat, location?.lng);
+      let nearbyData = await bookService.getNearbyBooks(location?.lat, location?.lng, activeRegionCode);
 
       if (!nearbyData || nearbyData.length === 0) {
         // Fallback to all books if no nearby books found
-        nearbyData = await bookService.getAllBooks();
+        nearbyData = await bookService.getAllBooks(location?.lat, location?.lng, activeRegionCode);
         setIsNearbyFallback(true);
       } else {
         setIsNearbyFallback(false);
       }
 
-      const featuredData = await bookService.getFeaturedBooks(location?.lat, location?.lng);
+      const featuredData = await bookService.getFeaturedBooks(location?.lat, location?.lng, activeRegionCode);
       setFeaturedBooks(featuredData);
 
       const recentData = await bookService.getRecentlyViewedBooks(location?.lat, location?.lng);

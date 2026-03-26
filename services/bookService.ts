@@ -37,7 +37,7 @@ const mapBook = (book: any, userLat?: number, userLng?: number): Book => {
     subcategory: book.subcategory || '',
     condition: book.condition,
     type: book.type,
-    price: book.price,
+    price: (book.price && book.price > 0) ? book.price : 0,
     images: (book.images || []).map((img: string) =>
       img.startsWith('/') ? `${SERVER_URL}${img}` : img
     ),
@@ -57,9 +57,9 @@ const mapBook = (book: any, userLat?: number, userLng?: number): Book => {
 
 export const bookService = {
   // Get all books
-  getAllBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+  getAllBooks: async (userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
-      const { data }: any = await api.get('/books');
+      const { data }: any = await api.get(`/books${region ? `?region=${region}` : ''}`);
       const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
@@ -69,11 +69,12 @@ export const bookService = {
   },
 
   // Get nearby books (Mobile Feed)
-  getNearbyBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+  getNearbyBooks: async (userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
       const params = new URLSearchParams();
       if (userLat) params.append('lat', userLat.toString());
       if (userLng) params.append('lng', userLng.toString());
+      if (region) params.append('region', region);
 
       const { data } = await api.get<{ books: any[] }>(`/mobile/books?${params.toString()}`);
       const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
@@ -85,9 +86,9 @@ export const bookService = {
   },
 
   // Get books by category
-  getBooksByCategory: async (category: string, userLat?: number, userLng?: number): Promise<Book[]> => {
+  getBooksByCategory: async (category: string, userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
-      const { data } = await api.get<{ books: any[] }>(`/books?category=${category}`);
+      const { data } = await api.get<{ books: any[] }>(`/books?category=${category}${region ? `&region=${region}` : ''}`);
       const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
@@ -106,9 +107,9 @@ export const bookService = {
   },
 
   // Search books
-  searchBooks: async (query: string, userLat?: number, userLng?: number): Promise<Book[]> => {
+  searchBooks: async (query: string, userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
-      const { data } = await api.get<{ books: any[] }>(`/books?keyword=${query}`);
+      const { data } = await api.get<{ books: any[] }>(`/books?keyword=${query}${region ? `&region=${region}` : ''}`);
       const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold');
     } catch (error) {
@@ -165,9 +166,9 @@ export const bookService = {
   },
 
   // Get user's favorite books (Backend)
-  getUserFavorites: async (userId: string, userLat?: number, userLng?: number): Promise<Book[]> => {
+  getUserFavorites: async (userId: string, userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
-      const { data } = await api.get<{ favorites: any[] }>(`/users/favorites`);
+      const { data } = await api.get<{ favorites: any[] }>(`/users/favorites${region ? `?region=${region}` : ''}`);
       return data.favorites ? data.favorites.map((b: any) => mapBook(b, userLat, userLng)) : [];
     } catch (error) {
       console.error("Get Favs Error", error);
@@ -176,9 +177,9 @@ export const bookService = {
   },
 
   // Get featured books
-  getFeaturedBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+  getFeaturedBooks: async (userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
-      const { data }: any = await api.get('/books');
+      const { data }: any = await api.get(`/books${region ? `?region=${region}` : ''}`);
       const books = data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
       return books.filter((b: Book) => b.status !== 'sold').slice(0, 5);
     } catch (e) { return []; }
@@ -224,11 +225,12 @@ export const bookService = {
   },
 
   // Get free books
-  getFreeBooks: async (userLat?: number, userLng?: number): Promise<Book[]> => {
+  getFreeBooks: async (userLat?: number, userLng?: number, region?: string): Promise<Book[]> => {
     try {
       const params = new URLSearchParams();
       if (userLat) params.append('lat', userLat.toString());
       if (userLng) params.append('lng', userLng.toString());
+      if (region) params.append('region', region);
       const { data } = await api.get<{ books: any[] }>(`/mobile/books/free?${params.toString()}`);
       return data.books ? data.books.map((b: any) => mapBook(b, userLat, userLng)) : [];
     } catch (e) {

@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useLocation } from './LocationContext';
 import { BlurView } from 'expo-blur';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const compareVersions = (v1: string, v2: string) => {
   const parts1 = v1.split('.').map(Number);
@@ -31,22 +32,30 @@ interface AppContextType {
   currencySymbol: string;
   activeRegionCode: string;
   isLoadingSettings: boolean;
+  regionChangeTag: number;
   forceUpdateConfig: { isRequired: boolean, storeUrl: string };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { location, isLoading: locationLoading } = useLocation();
+  const { 
+    location, 
+    isLoading: locationLoading, 
+    isFirstLaunch, 
+    regionChangeTag,
+    requestPermission, 
+    completeFirstLaunch 
+  } = useLocation();
   const [regions, setRegions] = useState<Region[]>([]);
   const [allowDummyLogin, setAllowDummyLogin] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [forceUpdateConfig, setForceUpdateConfig] = useState({ isRequired: false, storeUrl: '' });
 
-  // Fetch app settings on mount
+  // Fetch app settings on mount or region change
   useEffect(() => {
     fetchAppSettings();
-  }, []);
+  }, [regionChangeTag]);
 
   const fetchAppSettings = async () => {
     try {
@@ -79,10 +88,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Determine Region Status
-  const userCountry = location.countryCode || 'SA'; // Fallback to SA if unknown
+  const userCountry = location.countryCode || 'SA'; 
   const activeRegion = regions.find(r => r.countryCode === userCountry);
 
-  const isBlocked = activeRegion ? !activeRegion.isActive : true; // Block if inactive or not found
+  // CRITICAL: Block based on backend isActive status (which is now OS-aware)
+  const isBlocked = activeRegion ? !activeRegion.isActive : true;
   const currencySymbol = activeRegion?.currencySymbol || 'SAR';
   const regionName = activeRegion?.name || userCountry;
 
@@ -93,6 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       currencySymbol,
       activeRegionCode: userCountry,
       isLoadingSettings,
+      regionChangeTag,
       forceUpdateConfig
     }}>
       {children}
@@ -118,14 +129,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
         </View>
       )}
 
+      {/* First Launch Location Picker */}
+      {!isLoadingSettings && isFirstLaunch && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]}>
+          <BlurView intensity={100} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.blockContainer}>
+            <Ionicons name="location-sharp" size={60} color="#2CB5A0" style={{ marginBottom: 20 }} />
+            <Text style={styles.blockTitle}>Welcome to ReBookz</Text>
+            <Text style={styles.blockText}>
+              Please enable your location to find books nearby. 
+            </Text>
+            <TouchableOpacity 
+              style={styles.updateButton}
+              onPress={async () => {
+                const granted = await requestPermission();
+                if (granted) {
+                  await completeFirstLaunch();
+                }
+              }}
+            >
+              <Text style={styles.updateButtonText}>Set My Location</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Region Block Overlay */}
-      {!isLoadingSettings && !locationLoading && isBlocked && regions.length > 0 && !forceUpdateConfig.isRequired && (
+      {!isLoadingSettings && !locationLoading && isBlocked && !isFirstLaunch && regions.length > 0 && !forceUpdateConfig.isRequired && (
         <View style={[StyleSheet.absoluteFill, { zIndex: 9998 }]}>
           <BlurView intensity={100} tint="light" style={StyleSheet.absoluteFill} />
           <View style={styles.blockContainer}>
-            <Text style={styles.blockTitle}>Region Restricted</Text>
+            <Ionicons name="earth" size={60} color="#FF6B6B" style={{ marginBottom: 20 }} />
+            <Text style={styles.blockTitle}>Region Not Supported</Text>
             <Text style={styles.blockText}>
-              Sorry, ReBookz is currently not available in {regionName}. We hope to serve you soon!
+              Sorry, ReBookz is currently not available in your region ({regionName}). We are working hard to unlock more regions soon!
+            </Text>
+            <Text style={[styles.blockText, { fontSize: 14, marginTop: 10, opacity: 0.7 }]}>
+              Detected region: {regionName}
             </Text>
           </View>
         </View>

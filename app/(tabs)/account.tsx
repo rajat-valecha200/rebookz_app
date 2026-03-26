@@ -19,11 +19,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Header from '../../components/Header';
+import Constants from 'expo-constants';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
 import { bookService } from '../../services/bookService';
 import { useTheme } from '../../context/ThemeContext';
+import { useLocation } from '../../context/LocationContext';
 
 export default function AccountScreen() {
   const { user, logout, updateProfile, deleteAccount } = useAuth();
@@ -189,6 +191,29 @@ export default function AccountScreen() {
     { icon: 'pencil-sharp', label: 'Give Feedback', onPress: () => router.push('/feedback') },
   ];
 
+  // Debug region toggler for testing
+  const { location, updateLocation } = (useLocation as any)();
+  const [debugClicks, setDebugClicks] = React.useState(0);
+  const [showDebug, setShowDebug] = React.useState(false);
+
+  const handleDebugTrigger = () => {
+    setDebugClicks(prev => prev + 1);
+    if (debugClicks >= 4) {
+      setShowDebug(true);
+      Alert.alert('Debug Mode', 'Region Switcher Enabled');
+    }
+  };
+
+  const setTestRegion = async (code: 'SA' | 'IN') => {
+    if (code === 'SA') {
+      await updateLocation('Riyadh, Saudi Arabia', 24.7136, 46.6753, 'SA');
+    } else {
+      // Re-fetch real location logic or set default IN
+      await updateLocation('Mumbai, India', 19.0760, 72.8777, 'IN');
+    }
+    Alert.alert('Region Switched', `App is now mimicking ${code}. Please restart the app or refresh.`);
+  };
+
   const aboutItems = [
     { icon: 'information-circle', label: 'About ReBookz', onPress: () => router.push('/content/about') },
   ];
@@ -320,6 +345,11 @@ export default function AccountScreen() {
               </TouchableOpacity>
             ))}
           </View>
+          {/* App Info for Guest */}
+          <TouchableOpacity style={styles.appInfo} onPress={handleDebugTrigger} activeOpacity={1}>
+            <Text style={[styles.appVersion, textSecondaryStyle]}>Version {Constants.expoConfig?.version || '1.0.1'}</Text>
+            <Text style={[styles.appCopyright, textSecondaryStyle]}>© {new Date().getFullYear()} ReBookz. All rights reserved.</Text>
+          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     );
@@ -345,6 +375,30 @@ export default function AccountScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Debug Section */}
+        {showDebug && (
+          <View style={[styles.section, surfaceStyle, { borderColor: colors.primary, borderWidth: 1 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>[DEBUG] Region Switcher</Text>
+            <View style={{ flexDirection: 'row', padding: 10, gap: 10 }}>
+              <TouchableOpacity
+                style={[styles.loginButton, { flex: 1, height: 50, backgroundColor: location.countryCode === 'SA' ? colors.primary : colors.border }]}
+                onPress={() => setTestRegion('SA')}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Mimic Saudi (SA)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.loginButton, { flex: 1, height: 50, backgroundColor: location.countryCode === 'IN' ? colors.primary : colors.border }]}
+                onPress={() => setTestRegion('IN')}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Mimic India (IN)</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={{ fontSize: 10, textAlign: 'center', paddingBottom: 10, color: colors.textSecondary }}>
+              * App will automatically refresh settings and data upon switching.
+            </Text>
+          </View>
+        )}
 
         {renderEditModal()}
 
@@ -437,10 +491,10 @@ export default function AccountScreen() {
         </TouchableOpacity>
 
         {/* App Info */}
-        <View style={styles.appInfo}>
-          <Text style={[styles.appVersion, textSecondaryStyle]}>Version 1.0.0</Text>
+        <TouchableOpacity style={styles.appInfo} onPress={handleDebugTrigger} activeOpacity={1}>
+          <Text style={[styles.appVersion, textSecondaryStyle]}>Version {Constants.expoConfig?.version || '1.0.1'}</Text>
           <Text style={[styles.appCopyright, textSecondaryStyle]}>© {new Date().getFullYear()} ReBookz. All rights reserved.</Text>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -561,7 +615,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    marginHorizontal: Spacing.md,
+    marginHorizontal: Spacing.xs,
     backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
@@ -622,9 +676,8 @@ const styles = StyleSheet.create({
   },
   appInfo: {
     alignItems: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-    paddingHorizontal: Spacing.md,
+    marginVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
   },
   appName: {
     fontSize: 20,

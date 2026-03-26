@@ -16,11 +16,15 @@ import { Spacing } from '../constants/spacing';
 import { bookService } from '../services/bookService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
+import { useLocation } from '../context/LocationContext';
 import { Book } from '../types/Book';
 
 export default function FavouritesScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { activeRegionCode, regionChangeTag } = useAppContext();
+  const { location } = useLocation();
   const [favorites, setFavorites] = useState<Book[]>([]);
 
   useFocusEffect(
@@ -28,12 +32,12 @@ export default function FavouritesScreen() {
       if (user) {
         loadFavorites();
       }
-    }, [user])
+    }, [user, regionChangeTag])
   );
 
   const loadFavorites = async () => {
     if (user) {
-      const favs = await bookService.getUserFavorites(user.id);
+      const favs = await bookService.getUserFavorites(user.id, location?.lat, location?.lng, activeRegionCode);
       setFavorites(favs);
     }
   };

@@ -22,11 +22,13 @@ import { Category } from '../types/Category';
 
 import { useTheme } from '../context/ThemeContext';
 import { useLocation } from '../context/LocationContext';
+import { useAppContext } from '../context/AppContext';
 
 export default function CategoryBooksScreen() {
   const params = useLocalSearchParams();
   const { location } = useLocation();
   const { colors } = useTheme();
+  const { activeRegionCode, regionChangeTag } = useAppContext();
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
@@ -35,7 +37,7 @@ export default function CategoryBooksScreen() {
 
   useEffect(() => {
     loadData();
-  }, [params.category, params.filter, location]);
+  }, [params.category, params.filter, location, regionChangeTag]);
 
   const loadData = async () => {
     // 1. Get Category Details
@@ -59,14 +61,14 @@ export default function CategoryBooksScreen() {
       let booksData: Book[] = [];
       // Initial Fetch Logic
       if (params.filter === 'nearby') {
-        booksData = await bookService.getNearbyBooks(location?.lat, location?.lng);
+        booksData = await bookService.getNearbyBooks(location?.lat, location?.lng, activeRegionCode);
         setActiveFilter('nearby');
       } else if (params.filter === 'featured') {
-        booksData = await bookService.getFeaturedBooks();
+        booksData = await bookService.getFeaturedBooks(location?.lat, location?.lng, activeRegionCode);
       } else if (params.category) {
-        booksData = await bookService.getBooksByCategory(params.category as string);
+        booksData = await bookService.getBooksByCategory(params.category as string, location?.lat, location?.lng, activeRegionCode);
       } else {
-        booksData = await bookService.getAllBooks();
+        booksData = await bookService.getAllBooks(location?.lat, location?.lng, activeRegionCode);
       }
       setBooks(booksData);
       setFilteredBooks(booksData);

@@ -35,7 +35,7 @@ export default function AddBookScreen() {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const { location } = useLocation();
   const { colors } = useTheme();
-  const { currencySymbol } = useAppContext();
+  const { currencySymbol, activeRegionCode } = useAppContext();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
 
@@ -198,15 +198,13 @@ export default function AddBookScreen() {
     if (book) {
       setTitle(book.title);
       setDescription(book.description);
-      setCategory(book.category); // Case sensitivity?
+      setCategory(book.category);
       setSubcategory(book.subcategory || '');
       setCondition(book.condition);
       setType(book.type);
       setPrice(book.price ? book.price.toString() : '');
       setSchoolBoard(book.school || '');
       setClassLevel(book.classLevel || '');
-      // Image handling: book.images[0] is a URL.
-      // If we don't pick a new one, we should keep existing.
       setImage(book.images[0] || null);
     } else {
       Alert.alert('Error', 'Book not found');
@@ -215,41 +213,30 @@ export default function AddBookScreen() {
     setLoading(false);
   };
 
-  // 3. Update handleSubmit
   const handleSubmit = async () => {
-    // ... validation ...
-
-    // ... upload image logic ...
-    // If 'image' starts with 'http' or 'file', it might be existing.
-    // If it is same as book.images[0], we don't re-upload.
-    // But how to know if it's local file or remote?
-    // Local URI usually starts with file://
-    // Remote (existing): http...
-
-    // Logic:
-    let imageUrl = image;
-    // Check if new image (file scheme)
-    if (image && !image.startsWith('http') && !image.startsWith('/')) { // Simple check, might need better logic
-      // It's a local file, upload it.
-      const uploadedPath = await bookService.uploadImage(image);
-      if (uploadedPath) imageUrl = uploadedPath;
-      else {
-        Alert.alert('Error', 'Failed to upload image');
-        return;
-      }
-    } else {
-      // Keeps existing URL, but we need to pass strict relative path if backend expects it?
-      // bookService checks if starts with / and adds BASE_URL.
-      // If we send back full URL, we might double-prefix?
-      // Let's check backend updateBook impl.
-      // It saves as is.
-      // So if we send http://domain/uploads/img.jpg, backend saves it.
-      // Next read: mapBook logic: if startsWith / -> prepend base.
-      // If it starts with http -> returns as is. 
-      // So safe to send full URL.
+    if (!title.trim() || !category || !image) {
+      Alert.alert('Required', 'Please fill in all mandatory fields.');
+      return;
     }
 
+    if (type === 'sell' && (!price || parseFloat(price) <= 0)) {
+      Alert.alert('Required', 'Please enter a valid price for selling.');
+      return;
+    }
+
+    setLoading(true);
     try {
+      let imageUrl = image;
+      if (image && !image.startsWith('http') && !image.startsWith('/')) {
+        const uploadedPath = await bookService.uploadImage(image);
+        if (uploadedPath) imageUrl = uploadedPath;
+        else {
+          setLoading(false);
+          Alert.alert('Error', 'Failed to upload image');
+          return;
+        }
+      }
+
       const bookData = {
         title: title.trim(),
         description: description.trim(),
@@ -267,14 +254,13 @@ export default function AddBookScreen() {
         await bookService.updateBook(id as string, bookData);
         Alert.alert('Success', 'Book updated successfully', [{ text: 'OK', onPress: () => router.back() }]);
       } else {
-        // Create logic (existing)
-        // Need full object for create usually
         await bookService.addBook({
           ...bookData,
           author: '',
           sellerId: user?.id || '101',
           sellerName: user?.name || 'User',
           sellerPhone: user?.phone || '',
+          region: activeRegionCode,
           location: {
             address: location.address || 'Riyadh, Saudi Arabia',
             lat: location.lat,
@@ -287,7 +273,12 @@ export default function AddBookScreen() {
         });
         Alert.alert('Success', 'Book listed!', [{ text: 'OK', onPress: () => router.back() }]);
       }
-    } catch (e) { /*...*/ }
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Error', 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // I will just use `replace_file_content` to replace the entire `handleSubmit` and add `useEffect` and `useLocalSearchParams`.
