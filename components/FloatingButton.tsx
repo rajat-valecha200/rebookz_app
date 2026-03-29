@@ -59,7 +59,7 @@ export default function FloatingButton({ bottomInset = 20 }: FloatingButtonProps
                 <View style={[styles.iconCircle, { backgroundColor: '#E8F5E9' }]}>
                   <Ionicons name="camera" size={32} color={Colors.success} />
                 </View>
-                <Text style={styles.optionText}>Sell / Rent</Text>
+                <Text style={styles.optionText}>Sell / Donate</Text>
                 <Text style={styles.optionSubtext}>Upload Book</Text>
               </TouchableOpacity>
 
